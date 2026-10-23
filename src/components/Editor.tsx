@@ -2,21 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Search, 
   X, 
-  RotateCcw, 
-  RotateCw, 
   WrapText, 
   Check, 
   Copy, 
   FileCode2, 
-  Save, 
-  Play,
-  ArrowRight,
-  Maximize2,
   AlertTriangle,
   AlertCircle,
   CheckCircle2,
-  GitCompare,
-  Code
+  GitCompare
 } from 'lucide-react';
 import { ProjectFile, SyntaxDiagnostic } from '../types';
 
@@ -252,7 +245,6 @@ export const Editor: React.FC<EditorProps> = ({
   const lineCount = file.content.split('\n').length;
   const lineNumbers = Array.from({ length: lineCount }, (_, i) => i + 1);
 
-  // Jump cursor to diagnostic line
   const jumpToLine = (lineNum: number) => {
     if (!textareaRef.current) return;
     const lines = file.content.split('\n');
@@ -266,9 +258,9 @@ export const Editor: React.FC<EditorProps> = ({
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-slate-950 text-slate-100 overflow-hidden">
+    <div className="flex-1 flex flex-col h-full bg-zinc-950 text-zinc-100 overflow-hidden">
       {/* File Tab Bar */}
-      <div className="h-10 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between text-xs px-3 select-none">
+      <div className="h-11 bg-zinc-900 border-b border-zinc-800 flex items-center justify-between text-sm px-3 select-none">
         <div className="flex items-center gap-1 overflow-x-auto h-full">
           {openFiles.map((path) => {
             const isActive = path === activeFilePath;
@@ -277,16 +269,16 @@ export const Editor: React.FC<EditorProps> = ({
               <div
                 key={path}
                 onClick={() => onSelectTab(path)}
-                className={`group flex items-center gap-2 px-3.5 h-full cursor-pointer transition-colors border-b-2 text-xs font-medium ${
+                className={`group flex items-center gap-2.5 px-4 h-full cursor-pointer transition-colors border-b-2 text-sm font-medium ${
                   isActive
-                    ? 'bg-slate-950/80 text-sky-400 border-sky-400'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40 border-transparent'
+                    ? 'bg-zinc-950 text-sky-400 border-sky-400'
+                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850 border-transparent'
                 }`}
               >
-                <FileCode2 className={`w-3.5 h-3.5 ${isActive ? 'text-sky-400' : 'text-slate-500'}`} />
+                <FileCode2 className={`w-4 h-4 ${isActive ? 'text-sky-400' : 'text-zinc-500'}`} />
                 <span>{name}</span>
                 {file.path === path && file.isModified && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" title="Unsaved changes" />
+                  <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" title="Unsaved changes" />
                 )}
                 {openFiles.length > 1 && (
                   <button
@@ -294,9 +286,9 @@ export const Editor: React.FC<EditorProps> = ({
                       e.stopPropagation();
                       onCloseTab(path);
                     }}
-                    className="p-0.5 text-slate-500 hover:text-slate-200 rounded hover:bg-slate-800 transition-colors ml-1 cursor-pointer"
+                    className="p-1 text-zinc-500 hover:text-zinc-200 rounded hover:bg-zinc-800 transition-colors ml-1 cursor-pointer"
                   >
-                    <X className="w-3 h-3" />
+                    <X className="w-3.5 h-3.5" />
                   </button>
                 )}
               </div>
@@ -305,58 +297,58 @@ export const Editor: React.FC<EditorProps> = ({
         </div>
 
         {/* Editor Actions */}
-        <div className="flex items-center gap-1 text-slate-400 shrink-0">
+        <div className="flex items-center gap-1.5 text-zinc-400 shrink-0">
           <button
             onClick={() => setShowSearch(!showSearch)}
             title="Search & Replace (Ctrl+F)"
-            className={`p-1.5 rounded-md hover:bg-slate-800 hover:text-slate-200 transition-colors cursor-pointer ${
-              showSearch ? 'bg-slate-800 text-sky-400' : ''
+            className={`p-1.5 rounded-md hover:bg-zinc-800 hover:text-zinc-200 transition-colors cursor-pointer ${
+              showSearch ? 'bg-zinc-800 text-sky-400' : ''
             }`}
           >
-            <Search className="w-3.5 h-3.5" />
+            <Search className="w-4 h-4" />
           </button>
           <button
             onClick={() => setWordWrap(!wordWrap)}
             title="Toggle Word Wrap"
-            className={`p-1.5 rounded-md hover:bg-slate-800 hover:text-slate-200 transition-colors cursor-pointer ${
-              wordWrap ? 'bg-slate-800 text-sky-400' : ''
+            className={`p-1.5 rounded-md hover:bg-zinc-800 hover:text-zinc-200 transition-colors cursor-pointer ${
+              wordWrap ? 'bg-zinc-800 text-sky-400' : ''
             }`}
           >
-            <WrapText className="w-3.5 h-3.5" />
+            <WrapText className="w-4 h-4" />
           </button>
           <button
             onClick={() => setShowDiff(!showDiff)}
             title="Compare with saved version"
-            className={`p-1.5 rounded-md hover:bg-slate-800 hover:text-slate-200 transition-colors cursor-pointer ${
-              showDiff ? 'bg-slate-800 text-sky-400' : ''
+            className={`p-1.5 rounded-md hover:bg-zinc-800 hover:text-zinc-200 transition-colors cursor-pointer ${
+              showDiff ? 'bg-zinc-800 text-sky-400' : ''
             }`}
           >
-            <GitCompare className="w-3.5 h-3.5" />
+            <GitCompare className="w-4 h-4" />
           </button>
           <button
             onClick={handleCopyCode}
             title="Copy file contents"
-            className="p-1.5 rounded-md hover:bg-slate-800 hover:text-slate-200 transition-colors cursor-pointer"
+            className="p-1.5 rounded-md hover:bg-zinc-800 hover:text-zinc-200 transition-colors cursor-pointer"
           >
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+            {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
           </button>
         </div>
       </div>
 
       {/* Find & Replace Bar */}
       {showSearch && (
-        <div className="bg-slate-900/95 border-b border-slate-800 p-2.5 flex items-center justify-between text-xs gap-3">
-          <div className="flex items-center gap-2 flex-1 max-w-xl">
+        <div className="bg-zinc-900 border-b border-zinc-800 p-3 flex items-center justify-between text-sm gap-4">
+          <div className="flex items-center gap-3 flex-1 max-w-2xl">
             <div className="relative flex-1">
               <input
                 type="text"
                 placeholder="Find in file..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-700 rounded px-2.5 py-1 text-slate-100 placeholder-slate-500 text-xs focus:outline-none focus:border-sky-500"
+                className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-1.5 text-zinc-100 placeholder-zinc-500 text-sm focus:outline-none focus:border-sky-500"
               />
               {matchCount > 0 && (
-                <span className="absolute right-2 top-1.5 text-[10px] text-slate-400 font-mono">
+                <span className="absolute right-3 top-2 text-xs text-zinc-400 font-mono">
                   {matchCount} {matchCount === 1 ? 'match' : 'matches'}
                 </span>
               )}
@@ -368,14 +360,14 @@ export const Editor: React.FC<EditorProps> = ({
                 placeholder="Replace with..."
                 value={replaceTerm}
                 onChange={(e) => setReplaceTerm(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-700 rounded px-2.5 py-1 text-slate-100 placeholder-slate-500 text-xs focus:outline-none focus:border-sky-500"
+                className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-1.5 text-zinc-100 placeholder-zinc-500 text-sm focus:outline-none focus:border-sky-500"
               />
             </div>
 
             <button
               onClick={handleReplaceAll}
               disabled={!matchCount}
-              className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 disabled:opacity-40 font-medium transition-colors cursor-pointer"
+              className="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 disabled:opacity-40 text-sm font-medium transition-colors cursor-pointer shrink-0"
             >
               Replace All
             </button>
@@ -383,7 +375,7 @@ export const Editor: React.FC<EditorProps> = ({
 
           <button
             onClick={() => setShowSearch(false)}
-            className="p-1 text-slate-400 hover:text-slate-200 rounded hover:bg-slate-800 cursor-pointer"
+            className="p-1.5 text-zinc-400 hover:text-zinc-200 rounded-md hover:bg-zinc-800 cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -391,11 +383,11 @@ export const Editor: React.FC<EditorProps> = ({
       )}
 
       {/* Code Textarea Area with Line Numbers & Error Gutter */}
-      <div className="flex-1 flex overflow-hidden relative font-mono text-[13px] leading-relaxed">
-        {/* Line Numbers & Error Markers Gutter */}
+      <div className="flex-1 flex overflow-hidden relative font-mono text-[14px] leading-relaxed">
+        {/* Line Numbers Gutter */}
         <div
           ref={lineNumbersRef}
-          className="w-14 bg-slate-950/80 border-r border-slate-800/80 text-slate-600 text-right pr-2 select-none py-3 overflow-hidden shrink-0"
+          className="w-14 bg-zinc-950 border-r border-zinc-800/80 text-zinc-600 text-right pr-3 select-none py-3 overflow-hidden shrink-0 font-mono text-[13px]"
         >
           {lineNumbers.map((num) => {
             const hasError = diagnostics.some((d) => d.line === num && d.severity === 'error');
@@ -404,8 +396,8 @@ export const Editor: React.FC<EditorProps> = ({
             return (
               <div
                 key={num}
-                className={`flex items-center justify-end gap-1 ${
-                  num === cursorPos.line ? 'text-sky-400 font-bold bg-slate-800/40' : ''
+                className={`flex items-center justify-end gap-1.5 ${
+                  num === cursorPos.line ? 'text-sky-400 font-semibold' : ''
                 }`}
               >
                 {hasError ? (
@@ -429,7 +421,7 @@ export const Editor: React.FC<EditorProps> = ({
           onClick={updateCursorPosition}
           onScroll={handleScroll}
           spellCheck={false}
-          className={`flex-1 bg-transparent text-slate-200 p-3 outline-none resize-none overflow-auto font-mono ${
+          className={`flex-1 bg-transparent text-zinc-100 p-3.5 outline-none resize-none overflow-auto font-mono text-[14px] leading-relaxed selection:bg-sky-500/30 ${
             wordWrap ? 'whitespace-pre-wrap' : 'whitespace-pre'
           }`}
           style={{ tabSize: 4 }}
@@ -438,14 +430,14 @@ export const Editor: React.FC<EditorProps> = ({
 
       {/* Problems / Syntax Errors Drawer */}
       {showProblems && diagnostics.length > 0 && (
-        <div className="bg-slate-900 border-t border-slate-800 p-2.5 max-h-36 overflow-y-auto font-mono text-xs space-y-1">
-          <div className="flex items-center justify-between text-slate-400 pb-1 border-b border-slate-800">
-            <span className="font-semibold text-slate-300">
+        <div className="bg-zinc-900 border-t border-zinc-800 p-3 max-h-40 overflow-y-auto font-mono text-xs space-y-1.5">
+          <div className="flex items-center justify-between text-zinc-400 pb-1.5 border-b border-zinc-800">
+            <span className="font-semibold text-zinc-200">
               Syntax Diagnostics ({diagnostics.length})
             </span>
             <button
               onClick={() => setShowProblems(false)}
-              className="text-slate-500 hover:text-slate-300"
+              className="text-zinc-500 hover:text-zinc-300"
             >
               ×
             </button>
@@ -454,26 +446,26 @@ export const Editor: React.FC<EditorProps> = ({
             <div
               key={i}
               onClick={() => jumpToLine(diag.line)}
-              className="flex items-center gap-2 px-2 py-1 rounded hover:bg-slate-800/60 cursor-pointer text-[11px]"
+              className="flex items-center gap-2 px-2.5 py-1.5 rounded hover:bg-zinc-800 cursor-pointer text-xs"
             >
               {diag.severity === 'error' ? (
-                <AlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
               ) : (
-                <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
               )}
-              <span className="text-slate-400 font-bold">Line {diag.line}:</span>
-              <span className="text-slate-200">{diag.message}</span>
+              <span className="text-zinc-400 font-bold">Line {diag.line}:</span>
+              <span className="text-zinc-200">{diag.message}</span>
             </div>
           ))}
         </div>
       )}
 
       {/* Status Bar */}
-      <div className="h-6 bg-slate-900 border-t border-slate-800/80 px-3 flex items-center justify-between text-[11px] text-slate-400 select-none">
-        <div className="flex items-center gap-4">
+      <div className="h-8 bg-zinc-900 border-t border-zinc-800 px-4 flex items-center justify-between text-xs text-zinc-400 select-none">
+        <div className="flex items-center gap-5">
           <span>
-            Ln <strong className="text-slate-200 font-mono">{cursorPos.line}</strong>, Col{' '}
-            <strong className="text-slate-200 font-mono">{cursorPos.col}</strong>
+            Ln <strong className="text-zinc-200 font-mono">{cursorPos.line}</strong>, Col{' '}
+            <strong className="text-zinc-200 font-mono">{cursorPos.col}</strong>
           </span>
           <span>{lineCount} lines</span>
           <span>{file.content.length} characters</span>
@@ -483,24 +475,24 @@ export const Editor: React.FC<EditorProps> = ({
           {file.language === 'python' && (
             <button
               onClick={() => setShowProblems(!showProblems)}
-              className="flex items-center gap-1 hover:text-slate-200 cursor-pointer"
+              className="flex items-center gap-1.5 hover:text-zinc-200 cursor-pointer"
             >
               {diagnostics.length === 0 ? (
                 <span className="text-emerald-400 flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3" /> No syntax errors
+                  <CheckCircle2 className="w-3.5 h-3.5" /> No syntax errors
                 </span>
               ) : (
                 <span className="text-rose-400 flex items-center gap-1 font-semibold">
-                  <AlertCircle className="w-3 h-3" /> {diagnostics.length} issue(s)
+                  <AlertCircle className="w-3.5 h-3.5" /> {diagnostics.length} issue(s)
                 </span>
               )}
             </button>
           )}
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-5">
           <span>Spaces: 4</span>
-          <span>UTF-8 (CRLF)</span>
+          <span>UTF-8</span>
           <span className="capitalize text-sky-400 font-medium">{file.language}</span>
         </div>
       </div>

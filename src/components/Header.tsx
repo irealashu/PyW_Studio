@@ -3,22 +3,17 @@ import {
   Play, 
   Hammer, 
   Save, 
-  FolderPlus, 
-  FolderGit2, 
   Square, 
   Code2, 
   Package, 
   Cpu, 
   History, 
-  Trash2, 
   Settings,
   ChevronDown,
   Terminal,
   FileCode2,
   Check,
-  Sparkles,
-  Layers,
-  TestTube2
+  Plus
 } from 'lucide-react';
 import { Project, ViewMode } from '../types';
 
@@ -75,67 +70,64 @@ export const Header: React.FC<HeaderProps> = ({
     { id: 'editor', label: 'Editor', icon: <Code2 className="w-4 h-4" /> },
     { 
       id: 'dependencies', 
-      label: 'Dependencies', 
+      label: 'Packages', 
       icon: <Package className="w-4 h-4" />,
       count: currentProject.installedPackages.length
     },
+    { id: 'builder', label: 'Build EXE', icon: <Hammer className="w-4 h-4" /> },
     { id: 'environment', label: 'Environments', icon: <Cpu className="w-4 h-4" /> },
-    { id: 'builder', label: 'EXE Builder', icon: <Hammer className="w-4 h-4" /> },
-    { id: 'tests', label: 'Tests', icon: <TestTube2 className="w-4 h-4" /> },
-    { id: 'history', label: 'Build History', icon: <History className="w-4 h-4" /> },
-    { id: 'cleanup', label: 'Cleanup', icon: <Trash2 className="w-4 h-4" /> },
+    { id: 'history', label: 'History', icon: <History className="w-4 h-4" /> },
   ];
 
   return (
-    <header className="bg-slate-900/95 border-b border-slate-800 backdrop-blur-md text-slate-200 select-none sticky top-0 z-40">
-      <div className="max-w-[1920px] mx-auto px-4 lg:px-6 h-15 flex items-center justify-between gap-6">
+    <header className="bg-zinc-950 border-b border-zinc-800 text-zinc-100 select-none sticky top-0 z-40">
+      <div className="w-full px-5 h-16 flex items-center justify-between gap-6">
         
         {/* Left: Branding & Project Selector */}
-        <div className="flex items-center gap-4 shrink-0">
+        <div className="flex items-center gap-5 shrink-0">
           {/* Logo */}
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-sky-600 to-cyan-400 flex items-center justify-center text-white shadow-md shadow-sky-500/20 font-bold text-sm tracking-tight">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-sky-600 flex items-center justify-center text-white font-bold text-base tracking-tight shadow-sm">
               PyW
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-bold text-sm tracking-tight text-slate-100">
+                <span className="font-semibold text-base tracking-tight text-zinc-100">
                   PyW Studio
                 </span>
-                <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                <span className="text-xs font-mono font-medium px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700">
                   v2.0
                 </span>
               </div>
-              <span className="text-[11px] text-slate-400 block -mt-0.5">
-                Windows Python Packaging
+              <span className="text-xs text-zinc-400 block">
+                Python Windows Packaging
               </span>
             </div>
           </div>
 
-          <div className="h-6 w-px bg-slate-800" />
+          <div className="h-6 w-px bg-zinc-800" />
 
           {/* Project Switcher Dropdown */}
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setProjectMenuOpen(!projectMenuOpen)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-800 border border-slate-700/70 hover:border-slate-600 text-xs font-medium text-slate-200 transition-all cursor-pointer shadow-xs"
+              className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 hover:border-zinc-700 text-sm font-medium text-zinc-200 transition-colors cursor-pointer"
             >
-              <FolderGit2 className="w-3.5 h-3.5 text-sky-400" />
-              <div className="flex items-center gap-1.5">
-                <span className="text-slate-100 font-semibold">{currentProject.name}</span>
-                <span className="text-slate-400 text-[11px] font-mono">({currentProject.entryScript})</span>
+              <div className="flex items-center gap-2">
+                <span className="text-zinc-100 font-semibold">{currentProject.name}</span>
+                <span className="text-zinc-400 text-xs font-mono">({currentProject.entryScript})</span>
               </div>
-              <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${projectMenuOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`w-4 h-4 text-zinc-400 transition-transform duration-200 ${projectMenuOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {projectMenuOpen && (
-              <div className="absolute left-0 top-full mt-2 w-72 bg-slate-900 border border-slate-700/80 rounded-xl shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-                <div className="px-3 pb-2 mb-1 border-b border-slate-800 flex items-center justify-between text-[11px] font-medium text-slate-400 uppercase tracking-wider">
+              <div className="absolute left-0 top-full mt-2 w-72 bg-zinc-900 border border-zinc-800 rounded-xl shadow-xl py-2 z-50 animate-in fade-in duration-150">
+                <div className="px-3 pb-2 mb-1 border-b border-zinc-800 flex items-center justify-between text-xs font-medium text-zinc-400 uppercase tracking-wider">
                   <span>Projects</span>
-                  <span className="text-slate-500 text-[10px]">{projects.length} available</span>
+                  <span className="text-zinc-500 font-mono">{projects.length} available</span>
                 </div>
 
-                <div className="max-h-60 overflow-y-auto px-1 py-1 space-y-0.5">
+                <div className="max-h-60 overflow-y-auto px-1.5 py-1 space-y-1">
                   {projects.map((p) => {
                     const isSelected = p.id === currentProject.id;
                     return (
@@ -145,17 +137,17 @@ export const Header: React.FC<HeaderProps> = ({
                           onSelectProject(p.id);
                           setProjectMenuOpen(false);
                         }}
-                        className={`w-full text-left px-3 py-2 rounded-lg text-xs flex items-center justify-between transition-colors ${
+                        className={`w-full text-left px-3 py-2 rounded-lg text-sm flex items-center justify-between transition-colors cursor-pointer ${
                           isSelected
-                            ? 'bg-sky-500/15 text-sky-300 font-medium'
-                            : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100'
+                            ? 'bg-sky-500/10 text-sky-400 font-medium'
+                            : 'text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100'
                         }`}
                       >
                         <div className="flex items-center gap-2.5 truncate">
-                          <FileCode2 className={`w-4 h-4 ${isSelected ? 'text-sky-400' : 'text-slate-400'}`} />
+                          <FileCode2 className={`w-4 h-4 shrink-0 ${isSelected ? 'text-sky-400' : 'text-zinc-400'}`} />
                           <div className="truncate">
                             <span className="block truncate font-medium">{p.name}</span>
-                            <span className="text-[10px] text-slate-400 truncate block">{p.entryScript}</span>
+                            <span className="text-xs text-zinc-400 font-mono truncate block">{p.entryScript}</span>
                           </div>
                         </div>
                         {isSelected && <Check className="w-4 h-4 text-sky-400 shrink-0 ml-2" />}
@@ -164,16 +156,16 @@ export const Header: React.FC<HeaderProps> = ({
                   })}
                 </div>
 
-                <div className="border-t border-slate-800 mt-2 pt-2 px-1">
+                <div className="border-t border-zinc-800 mt-2 pt-2 px-1.5">
                   <button
                     onClick={() => {
                       onOpenNewProjectModal();
                       setProjectMenuOpen(false);
                     }}
-                    className="w-full text-left px-3 py-2 rounded-lg text-xs text-sky-400 hover:text-sky-300 hover:bg-slate-800/80 flex items-center gap-2 font-medium transition-colors"
+                    className="w-full text-left px-3 py-2 rounded-lg text-sm text-sky-400 hover:text-sky-300 hover:bg-zinc-800 flex items-center gap-2 font-medium transition-colors cursor-pointer"
                   >
-                    <FolderPlus className="w-4 h-4" />
-                    <span>Create New Python Project...</span>
+                    <Plus className="w-4 h-4" />
+                    <span>Create New Project</span>
                   </button>
                 </div>
               </div>
@@ -181,26 +173,26 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Center: Navigation Menu Tabs (Spacious, Clean, Uncongested) */}
-        <nav className="flex items-center gap-1.5 bg-slate-950/60 p-1.5 rounded-xl border border-slate-800/80">
+        {/* Center: Main Navigation Tabs */}
+        <nav className="flex items-center gap-1 bg-zinc-900 p-1 rounded-xl border border-zinc-800">
           {navItems.map((item) => {
             const isActive = activeView === item.id;
             return (
               <button
                 key={item.id}
                 onClick={() => onSelectView(item.id)}
-                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer whitespace-nowrap ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer whitespace-nowrap ${
                   isActive
-                    ? 'bg-sky-600 text-white shadow-sm shadow-sky-600/30'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/70'
+                    ? 'bg-zinc-800 text-white shadow-xs'
+                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850'
                 }`}
               >
                 {item.icon}
                 <span>{item.label}</span>
                 {item.count !== undefined && (
                   <span
-                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
-                      isActive ? 'bg-sky-800 text-sky-100' : 'bg-slate-800 text-slate-400'
+                    className={`text-xs px-2 py-0.5 rounded-full font-mono ${
+                      isActive ? 'bg-zinc-700 text-zinc-200' : 'bg-zinc-800 text-zinc-400'
                     }`}
                   >
                     {item.count}
@@ -212,76 +204,75 @@ export const Header: React.FC<HeaderProps> = ({
         </nav>
 
         {/* Right: Actions & Tools */}
-        <div className="flex items-center gap-2.5 shrink-0">
-          {/* Main Action Buttons */}
+        <div className="flex items-center gap-3 shrink-0">
           {isTaskRunning ? (
             <button
               onClick={onCancelTask}
-              className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold shadow-md shadow-rose-600/20 transition-all animate-pulse cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-sm font-semibold transition-colors cursor-pointer"
             >
-              <Square className="w-3.5 h-3.5 fill-current" />
+              <Square className="w-4 h-4 fill-current" />
               <span>Cancel Task</span>
             </button>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <button
                 onClick={onRunScript}
-                title="Run active script (F5)"
-                className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-md shadow-emerald-600/20 transition-all cursor-pointer hover:shadow-emerald-600/30 active:scale-98"
+                title="Run script (F5)"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold transition-colors cursor-pointer active:scale-98"
               >
-                <Play className="w-3.5 h-3.5 fill-current" />
+                <Play className="w-4 h-4 fill-current" />
                 <span>Run</span>
-                <span className="text-[10px] font-mono opacity-80 bg-emerald-700/80 px-1 py-0.2 rounded">F5</span>
+                <span className="text-xs font-mono opacity-80 bg-emerald-700 px-1.5 py-0.5 rounded">F5</span>
               </button>
 
               <button
                 onClick={onBuildExe}
                 title="Build Standalone Executable (PyInstaller)"
-                className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-sky-600 to-cyan-600 hover:from-sky-500 hover:to-cyan-500 text-white text-xs font-semibold shadow-md shadow-sky-600/20 transition-all cursor-pointer hover:shadow-sky-600/30 active:scale-98"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-sm font-semibold transition-colors cursor-pointer active:scale-98"
               >
-                <Hammer className="w-3.5 h-3.5" />
+                <Hammer className="w-4 h-4" />
                 <span>Build EXE</span>
               </button>
             </div>
           )}
 
-          <div className="h-5 w-px bg-slate-800 mx-1" />
+          <div className="h-6 w-px bg-zinc-800 mx-1" />
 
           {/* Quick Utility Tools */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
             <button
               onClick={onSaveCurrentFile}
               title="Save current file (Ctrl+S)"
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
                 hasUnsavedChanges
-                  ? 'bg-amber-500/15 text-amber-300 border border-amber-500/40 hover:bg-amber-500/25'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                  ? 'bg-amber-500/10 text-amber-300 border border-amber-500/30 hover:bg-amber-500/20'
+                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 border border-transparent'
               }`}
             >
-              <Save className="w-3.5 h-3.5" />
+              <Save className="w-4 h-4" />
               <span>Save</span>
               {hasUnsavedChanges && (
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-400" title="Unsaved changes" />
+                <span className="w-2 h-2 rounded-full bg-amber-400" title="Unsaved changes" />
               )}
             </button>
 
             <button
               onClick={onToggleTerminal}
               title="Toggle Console Terminal"
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
                 isTerminalOpen
-                  ? 'bg-slate-800 text-sky-400 border border-slate-700/60'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                  ? 'bg-zinc-800 text-sky-400 border border-zinc-700'
+                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 border border-transparent'
               }`}
             >
-              <Terminal className="w-3.5 h-3.5" />
+              <Terminal className="w-4 h-4" />
               <span>Console</span>
             </button>
 
             <button
               onClick={onOpenSettings}
               title="Settings & Workspace Preferences"
-              className="p-2 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors cursor-pointer"
+              className="p-2 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 transition-colors cursor-pointer"
             >
               <Settings className="w-4 h-4" />
             </button>

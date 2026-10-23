@@ -8,11 +8,7 @@ import {
   ChevronDown, 
   ChevronUp, 
   Square, 
-  CheckCircle2, 
-  AlertCircle,
-  X,
-  CornerDownLeft,
-  Sparkles
+  CornerDownLeft
 } from 'lucide-react';
 import { TaskLogItem } from '../types';
 
@@ -106,47 +102,47 @@ export const TerminalOutput: React.FC<TerminalOutputProps> = ({
     return (
       <div
         onClick={onToggleOpen}
-        className="h-8 bg-slate-900 border-t border-slate-800 px-4 flex items-center justify-between text-xs text-slate-400 cursor-pointer hover:bg-slate-850 hover:text-slate-300 transition-colors select-none"
+        className="h-9 bg-zinc-900 border-t border-zinc-800 px-4 flex items-center justify-between text-xs text-zinc-400 cursor-pointer hover:bg-zinc-850 hover:text-zinc-200 transition-colors select-none"
       >
-        <div className="flex items-center gap-2.5">
-          <Terminal className="w-3.5 h-3.5 text-sky-400" />
-          <span className="font-medium text-slate-300">Terminal & Interactive Python Console</span>
+        <div className="flex items-center gap-3">
+          <Terminal className="w-4 h-4 text-sky-400" />
+          <span className="font-semibold text-zinc-300">Terminal & Python Console</span>
           {currentTask && currentTask.status === 'running' && (
-            <span className="flex items-center gap-1.5 text-[11px] text-amber-300 font-mono">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+            <span className="flex items-center gap-1.5 text-xs text-amber-300 font-mono">
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
               {currentTask.title}...
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
-          <span>Click to expand</span>
-          <ChevronUp className="w-3.5 h-3.5" />
+        <div className="flex items-center gap-1.5 text-xs text-zinc-500">
+          <span>Expand</span>
+          <ChevronUp className="w-4 h-4" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-68 bg-slate-950 border-t border-slate-800 flex flex-col font-mono text-xs select-none">
+    <div className="h-72 bg-zinc-950 border-t border-zinc-800 flex flex-col font-mono text-sm select-none">
       {/* Console Top Toolbar */}
-      <div className="h-9 bg-slate-900 border-b border-slate-800 px-4 flex items-center justify-between text-xs text-slate-300">
-        <div className="flex items-center gap-2.5">
-          <Terminal className="w-3.5 h-3.5 text-sky-400" />
-          <span className="font-semibold text-slate-200">Terminal Task Runner & REPL</span>
+      <div className="h-10 bg-zinc-900 border-b border-zinc-800 px-4 flex items-center justify-between text-xs text-zinc-300 font-sans">
+        <div className="flex items-center gap-3">
+          <Terminal className="w-4 h-4 text-sky-400" />
+          <span className="font-semibold text-zinc-200">Terminal & REPL</span>
           {currentTask && (
-            <div className="flex items-center gap-2 text-[10px]">
-              <span className="px-1.5 py-0.2 rounded bg-slate-800 text-slate-300 border border-slate-700">
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700 font-mono text-xs">
                 {currentTask.title}
               </span>
               <span
-                className={`font-semibold ${
+                className={`font-semibold font-mono text-xs ${
                   currentTask.status === 'running'
-                    ? 'text-amber-400 animate-pulse'
+                    ? 'text-amber-400'
                     : currentTask.status === 'success'
                     ? 'text-emerald-400'
                     : currentTask.status === 'failed'
                     ? 'text-rose-400'
-                    : 'text-slate-400'
+                    : 'text-zinc-400'
                 }`}
               >
                 [{currentTask.status.toUpperCase()}]
@@ -156,23 +152,22 @@ export const TerminalOutput: React.FC<TerminalOutputProps> = ({
         </div>
 
         {/* Action buttons */}
-        <div className="flex items-center gap-1.5 text-slate-400">
+        <div className="flex items-center gap-2 text-zinc-400">
           {currentTask?.status === 'running' && (
             <button
               onClick={onCancelTask}
               title="Cancel running process"
-              className="flex items-center gap-1 px-2 py-0.5 rounded bg-rose-600/90 text-white hover:bg-rose-500 font-sans text-[10px] font-semibold cursor-pointer"
+              className="flex items-center gap-1 px-2.5 py-1 rounded bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold cursor-pointer"
             >
-              <Square className="w-2.5 h-2.5 fill-current" />
+              <Square className="w-3 h-3 fill-current" />
               <span>Kill</span>
             </button>
           )}
 
           <button
             onClick={() => setAutoScroll(!autoScroll)}
-            title="Auto-scroll"
-            className={`px-1.5 py-0.5 rounded text-[10px] font-sans cursor-pointer ${
-              autoScroll ? 'bg-slate-800 text-sky-300' : 'text-slate-500 hover:text-slate-300'
+            className={`px-2 py-1 rounded text-xs cursor-pointer transition-colors ${
+              autoScroll ? 'bg-zinc-800 text-sky-400' : 'text-zinc-500 hover:text-zinc-300'
             }`}
           >
             Auto-scroll: {autoScroll ? 'ON' : 'OFF'}
@@ -181,33 +176,33 @@ export const TerminalOutput: React.FC<TerminalOutputProps> = ({
           <button
             onClick={handleCopyLogs}
             title="Copy logs"
-            className="p-1 rounded hover:bg-slate-800 hover:text-slate-200 cursor-pointer"
+            className="p-1.5 rounded-md hover:bg-zinc-800 hover:text-zinc-200 cursor-pointer"
           >
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+            {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
           </button>
 
           <button
             onClick={handleDownloadLogs}
             title="Download log file"
-            className="p-1 rounded hover:bg-slate-800 hover:text-slate-200 cursor-pointer"
+            className="p-1.5 rounded-md hover:bg-zinc-800 hover:text-zinc-200 cursor-pointer"
           >
-            <Download className="w-3.5 h-3.5" />
+            <Download className="w-4 h-4" />
           </button>
 
           <button
             onClick={onClearLogs}
             title="Clear console"
-            className="p-1 rounded hover:bg-slate-800 hover:text-slate-200 cursor-pointer"
+            className="p-1.5 rounded-md hover:bg-zinc-800 hover:text-zinc-200 cursor-pointer"
           >
-            <Trash2 className="w-3.5 h-3.5" />
+            <Trash2 className="w-4 h-4" />
           </button>
 
           <button
             onClick={onToggleOpen}
             title="Collapse terminal"
-            className="p-1 rounded hover:bg-slate-800 hover:text-slate-200 cursor-pointer"
+            className="p-1.5 rounded-md hover:bg-zinc-800 hover:text-zinc-200 cursor-pointer"
           >
-            <ChevronDown className="w-3.5 h-3.5" />
+            <ChevronDown className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -215,26 +210,27 @@ export const TerminalOutput: React.FC<TerminalOutputProps> = ({
       {/* Output Console Log Area */}
       <div
         ref={logContainerRef}
-        className="flex-1 overflow-y-auto p-3 space-y-1 text-slate-300 font-mono text-[11px] leading-relaxed selection:bg-sky-500/30"
+        className="flex-1 overflow-y-auto p-4 space-y-1.5 text-zinc-300 font-mono text-[13px] leading-relaxed selection:bg-sky-500/30"
       >
         {!currentTask || currentTask.logs.length === 0 ? (
-          <div className="text-slate-600 italic">
-            PyW Studio Python 3.12.3 Console Ready. Type Python statements (e.g. &apos;2+2&apos;, &apos;math.sqrt(16)&apos;) or commands (&apos;pip list&apos;, &apos;help&apos;) below.
+          <div className="text-zinc-500 italic">
+            PyW Studio Python 3.12.3 Console Ready. Type statements (&apos;2+2&apos;, &apos;math.sqrt(16)&apos;) or commands (&apos;pip list&apos;, &apos;help&apos;) below.
           </div>
         ) : (
           currentTask.logs.map((log, idx) => {
             const isStderr = log.stream === 'stderr';
             const isSystem = log.stream === 'system';
 
-            let colorClass = 'text-slate-300';
+            let colorClass = 'text-zinc-300';
             if (isStderr) colorClass = 'text-rose-400 font-medium';
             else if (isSystem) colorClass = 'text-sky-400 font-semibold';
             else if (log.text.includes('INFO:')) colorClass = 'text-emerald-300';
             else if (log.text.includes('WARNING:')) colorClass = 'text-amber-300';
+            else if (log.text.includes('SUCCESS:')) colorClass = 'text-emerald-400 font-bold';
             else if (log.text.includes('ERROR:')) colorClass = 'text-rose-400 font-bold';
 
             return (
-              <div key={idx} className={`leading-tight break-all ${colorClass}`}>
+              <div key={idx} className={`leading-relaxed break-all ${colorClass}`}>
                 {log.text}
               </div>
             );
@@ -245,9 +241,9 @@ export const TerminalOutput: React.FC<TerminalOutputProps> = ({
       {/* Interactive Command Prompt Line */}
       <form
         onSubmit={handleInputSubmit}
-        className="h-9 bg-slate-900 border-t border-slate-800/80 px-3 flex items-center gap-2 select-text"
+        className="h-10 bg-zinc-900 border-t border-zinc-800 px-4 flex items-center gap-3 select-text"
       >
-        <span className="text-emerald-400 font-bold font-mono text-xs select-none">
+        <span className="text-emerald-400 font-bold font-mono text-sm select-none">
           &gt;&gt;&gt;
         </span>
         <input
@@ -256,15 +252,15 @@ export const TerminalOutput: React.FC<TerminalOutputProps> = ({
           value={inputVal}
           onChange={(e) => setInputVal(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Enter Python statement or CLI command (e.g. 2**10, pip list, help)..."
-          className="flex-1 bg-transparent text-slate-100 placeholder-slate-500 outline-none font-mono text-xs"
+          placeholder="Enter Python statement or CLI command (e.g. pip list, help)..."
+          className="flex-1 bg-transparent text-zinc-100 placeholder-zinc-500 outline-none font-mono text-sm"
         />
         <button
           type="submit"
           disabled={!inputVal.trim()}
-          className="p-1 text-slate-400 hover:text-sky-300 disabled:opacity-30 cursor-pointer"
+          className="p-1 text-zinc-400 hover:text-sky-300 disabled:opacity-30 cursor-pointer"
         >
-          <CornerDownLeft className="w-3.5 h-3.5" />
+          <CornerDownLeft className="w-4 h-4" />
         </button>
       </form>
     </div>

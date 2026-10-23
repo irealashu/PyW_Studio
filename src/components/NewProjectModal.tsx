@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { X, FolderPlus, Sparkles, CheckCircle2, FileCode2, Gamepad2, Wrench, Calculator, FileText } from 'lucide-react';
-import { Project } from '../types';
+import { X, FolderPlus, CheckCircle2, FileText, Calculator } from 'lucide-react';
 
 interface NewProjectModalProps {
   onClose: () => void;
@@ -28,38 +27,38 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-800 rounded-xl shadow-2xl max-w-lg w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800">
-          <div className="flex items-center gap-2">
+    <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4">
+      <div className="bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl max-w-lg w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800">
+          <div className="flex items-center gap-2.5">
             <FolderPlus className="w-5 h-5 text-sky-400" />
-            <h3 className="text-sm font-bold text-slate-100">Create New Python Project</h3>
+            <h3 className="text-base font-bold text-zinc-100">Create New Python Project</h3>
           </div>
           <button
             onClick={onClose}
-            className="p-1 text-slate-400 hover:text-slate-200 rounded hover:bg-slate-800 cursor-pointer"
+            className="p-1.5 text-zinc-400 hover:text-zinc-200 rounded-md hover:bg-zinc-800 cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
           <div>
-            <label className="text-xs font-semibold text-slate-300 block mb-1">
+            <label className="text-sm font-semibold text-zinc-300 block mb-1.5">
               Project Name
             </label>
             <input
               type="text"
               autoFocus
-              placeholder="e.g. ImageOptimizer, RetroArcade"
+              placeholder="e.g. DesktopApp, ImageOptimizer"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-sky-500"
+              className="w-full h-10 bg-zinc-950 border border-zinc-700 rounded-lg px-3.5 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-sky-500"
             />
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-slate-300 block mb-1">
+            <label className="text-sm font-semibold text-zinc-300 block mb-1.5">
               Description (Optional)
             </label>
             <input
@@ -67,125 +66,77 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
               placeholder="Brief summary of what this application does"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-sky-500"
+              className="w-full h-10 bg-zinc-950 border border-zinc-700 rounded-lg px-3.5 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-sky-500"
             />
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-slate-300 block mb-2">
+            <label className="text-sm font-semibold text-zinc-300 block mb-2.5">
               Starter Template
             </label>
-            <div className="grid grid-cols-1 gap-2.5 max-h-60 overflow-y-auto pr-1">
+            <div className="grid grid-cols-1 gap-3 max-h-56 overflow-y-auto pr-1">
               <div
                 onClick={() => setSelectedTemplate('calculator')}
-                className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                className={`p-4 rounded-xl border cursor-pointer transition-colors ${
                   selectedTemplate === 'calculator'
-                    ? 'bg-sky-950/40 border-sky-500'
-                    : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
+                    ? 'bg-zinc-800 border-sky-500'
+                    : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700'
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2.5">
                     <Calculator className="w-4 h-4 text-sky-400" />
-                    <span className="text-xs font-bold text-slate-100">
-                      Modern Tkinter / ttk Desktop Utility
+                    <span className="text-sm font-semibold text-zinc-100">
+                      Desktop Utility Application
                     </span>
                   </div>
                   {selectedTemplate === 'calculator' && (
                     <CheckCircle2 className="w-4 h-4 text-sky-400" />
                   )}
                 </div>
-                <p className="text-[11px] text-slate-400 mt-1 pl-6">
-                  Full standalone GUI template with ttk widgets, event bindings, math engine, and unit tests.
-                </p>
-              </div>
-
-              <div
-                onClick={() => setSelectedTemplate('arcade')}
-                className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                  selectedTemplate === 'arcade'
-                    ? 'bg-sky-950/40 border-sky-500'
-                    : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Gamepad2 className="w-4 h-4 text-purple-400" />
-                    <span className="text-xs font-bold text-slate-100">
-                      Retro 2D Breakout Arcade Game
-                    </span>
-                  </div>
-                  {selectedTemplate === 'arcade' && (
-                    <CheckCircle2 className="w-4 h-4 text-sky-400" />
-                  )}
-                </div>
-                <p className="text-[11px] text-slate-400 mt-1 pl-6">
-                  Playable 2D Tkinter Canvas game with paddle movement, brick collision, game loop, and score tracking.
-                </p>
-              </div>
-
-              <div
-                onClick={() => setSelectedTemplate('cleaner')}
-                className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                  selectedTemplate === 'cleaner'
-                    ? 'bg-sky-950/40 border-sky-500'
-                    : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Wrench className="w-4 h-4 text-emerald-400" />
-                    <span className="text-xs font-bold text-slate-100">
-                      Multi-Threaded System Utility
-                    </span>
-                  </div>
-                  {selectedTemplate === 'cleaner' && (
-                    <CheckCircle2 className="w-4 h-4 text-sky-400" />
-                  )}
-                </div>
-                <p className="text-[11px] text-slate-400 mt-1 pl-6">
-                  Tkinter treeview, progressbar, threading, and system file manipulation.
+                <p className="text-xs text-zinc-400 mt-1.5 pl-6">
+                  Clean Tkinter desktop utility with interactive event handlers and pyinstaller build profile.
                 </p>
               </div>
 
               <div
                 onClick={() => setSelectedTemplate('blank')}
-                className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                className={`p-4 rounded-xl border cursor-pointer transition-colors ${
                   selectedTemplate === 'blank'
-                    ? 'bg-sky-950/40 border-sky-500'
-                    : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
+                    ? 'bg-zinc-800 border-sky-500'
+                    : 'bg-zinc-950 border-zinc-800 hover:border-zinc-700'
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-slate-400" />
-                    <span className="text-xs font-bold text-slate-100">
-                      Minimal Python Script (.pyw)
+                  <div className="flex items-center gap-2.5">
+                    <FileText className="w-4 h-4 text-zinc-400" />
+                    <span className="text-sm font-semibold text-zinc-100">
+                      Minimal Script (.pyw)
                     </span>
                   </div>
                   {selectedTemplate === 'blank' && (
                     <CheckCircle2 className="w-4 h-4 text-sky-400" />
                   )}
                 </div>
-                <p className="text-[11px] text-slate-400 mt-1 pl-6">
-                  Clean starter with entry script, pywstudio.json metadata, and requirements.txt.
+                <p className="text-xs text-zinc-400 mt-1.5 pl-6">
+                  Clean single entry file with requirements and packaging profile.
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-zinc-800">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors cursor-pointer"
+              className="px-4 py-2 rounded-lg text-sm text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!name.trim()}
-              className="px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white text-xs font-semibold shadow-sm transition-colors cursor-pointer"
+              className="px-5 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white text-sm font-semibold transition-colors cursor-pointer"
             >
               Create Project
             </button>

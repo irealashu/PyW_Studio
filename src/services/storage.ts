@@ -2,12 +2,12 @@ import { Project, VirtualEnvironment, PythonInterpreter, BuildHistoryRecord, Tas
 import { INITIAL_PROJECTS, INITIAL_ENVIRONMENTS, DEFAULT_INTERPRETERS } from '../data/defaultProjects';
 
 const STORAGE_KEYS = {
-  PROJECTS: 'pyw_studio_projects_v2',
-  ACTIVE_PROJECT: 'pyw_studio_active_project_id',
-  ENVIRONMENTS: 'pyw_studio_environments_v2',
-  INTERPRETERS: 'pyw_studio_interpreters_v2',
-  BUILD_HISTORY: 'pyw_studio_build_history_v2',
-  SETTINGS: 'pyw_studio_settings_v2',
+  PROJECTS: 'pyw_studio_projects_v3',
+  ACTIVE_PROJECT: 'pyw_studio_active_project_id_v3',
+  ENVIRONMENTS: 'pyw_studio_environments_v3',
+  INTERPRETERS: 'pyw_studio_interpreters_v3',
+  BUILD_HISTORY: 'pyw_studio_build_history_v3',
+  SETTINGS: 'pyw_studio_settings_v3',
 };
 
 export const storage = {

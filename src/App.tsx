@@ -718,7 +718,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-slate-950 text-slate-100 overflow-hidden font-sans">
+    <div className="h-screen w-screen flex flex-col bg-zinc-950 text-zinc-100 overflow-hidden font-sans">
       {/* 1. Header Toolbar & Project Selector */}
       <Header
         currentProject={currentProject}
@@ -755,7 +755,7 @@ export const App: React.FC = () => {
         />
 
         {/* Dynamic Center View */}
-        <main className="flex-1 flex flex-col overflow-hidden bg-slate-950">
+        <main className="flex-1 flex flex-col overflow-hidden bg-zinc-950">
           {activeView === 'editor' && (
             <Editor
               file={activeFile}

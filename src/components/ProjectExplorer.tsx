@@ -7,12 +7,8 @@ import {
   Trash2, 
   Download, 
   FileCheck, 
-  ChevronRight, 
-  ChevronDown,
-  Sparkles,
   Settings2,
-  FilePlus2,
-  RefreshCw
+  Info
 } from 'lucide-react';
 import { Project, ProjectFile } from '../types';
 
@@ -49,63 +45,63 @@ export const ProjectExplorer: React.FC<ProjectExplorerProps> = ({
 
   const getFileIcon = (file: ProjectFile) => {
     if (file.language === 'python') {
-      return <FileCode2 className="w-3.5 h-3.5 text-sky-400 shrink-0" />;
+      return <FileCode2 className="w-4 h-4 text-sky-400 shrink-0" />;
     }
     if (file.language === 'json') {
-      return <Settings2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />;
+      return <Settings2 className="w-4 h-4 text-amber-400 shrink-0" />;
     }
-    return <FileText className="w-3.5 h-3.5 text-slate-400 shrink-0" />;
+    return <FileText className="w-4 h-4 text-zinc-400 shrink-0" />;
   };
 
   return (
-    <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col h-full text-slate-200 select-none shrink-0">
+    <aside className="w-64 bg-zinc-950 border-r border-zinc-800 flex flex-col h-full text-zinc-200 select-none shrink-0">
       {/* Explorer Header */}
-      <div className="h-10 px-3.5 border-b border-slate-800 flex items-center justify-between bg-slate-900/90 text-xs">
-        <div className="flex items-center gap-2 font-semibold text-slate-300">
+      <div className="h-12 px-4 border-b border-zinc-800 flex items-center justify-between text-sm">
+        <div className="flex items-center gap-2 font-medium text-zinc-300">
           <FolderTree className="w-4 h-4 text-sky-400" />
           <span>Files</span>
-          <span className="text-[10px] text-slate-500 font-mono">({Object.keys(project.files).length})</span>
+          <span className="text-xs text-zinc-500 font-mono">({Object.keys(project.files).length})</span>
         </div>
         <div className="flex items-center gap-1">
           <button
             onClick={() => setIsAddingFile(true)}
             title="Create new file"
-            className="p-1 rounded text-slate-400 hover:text-sky-300 hover:bg-slate-800 transition-colors cursor-pointer"
+            className="p-1.5 rounded-md text-zinc-400 hover:text-sky-300 hover:bg-zinc-900 transition-colors cursor-pointer"
           >
-            <Plus className="w-3.5 h-3.5" />
+            <Plus className="w-4 h-4" />
           </button>
           <button
             onClick={onExportProject}
             title="Export & download project files"
-            className="p-1 rounded text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors cursor-pointer"
+            className="p-1.5 rounded-md text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 transition-colors cursor-pointer"
           >
-            <Download className="w-3.5 h-3.5" />
+            <Download className="w-4 h-4" />
           </button>
         </div>
       </div>
 
       {/* New file input form */}
       {isAddingFile && (
-        <form onSubmit={handleCreateSubmit} className="p-2 border-b border-slate-800 bg-slate-800/50">
+        <form onSubmit={handleCreateSubmit} className="p-3 border-b border-zinc-800 bg-zinc-900/60">
           <input
             type="text"
             autoFocus
-            placeholder="e.g. utils.py, dialog.pyw"
+            placeholder="e.g. main.pyw, config.py"
             value={newFileName}
             onChange={(e) => setNewFileName(e.target.value)}
-            className="w-full text-xs px-2 py-1 bg-slate-900 border border-sky-500 rounded text-slate-100 focus:outline-none"
+            className="w-full text-sm px-3 py-1.5 bg-zinc-950 border border-sky-500 rounded-md text-zinc-100 placeholder-zinc-500 focus:outline-none"
           />
-          <div className="flex items-center justify-end gap-1 mt-1.5">
+          <div className="flex items-center justify-end gap-2 mt-2">
             <button
               type="button"
               onClick={() => setIsAddingFile(false)}
-              className="text-[10px] px-2 py-0.5 rounded text-slate-400 hover:text-slate-200"
+              className="text-xs px-2.5 py-1 rounded text-zinc-400 hover:text-zinc-200 cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="text-[10px] px-2 py-0.5 rounded bg-sky-600 hover:bg-sky-500 text-white font-medium"
+              className="text-xs px-3 py-1 rounded bg-sky-600 hover:bg-sky-500 text-white font-medium cursor-pointer"
             >
               Create
             </button>
@@ -114,7 +110,7 @@ export const ProjectExplorer: React.FC<ProjectExplorerProps> = ({
       )}
 
       {/* File List */}
-      <div className="flex-1 overflow-y-auto py-1">
+      <div className="flex-1 overflow-y-auto py-2 px-2 space-y-1">
         {Object.values(project.files).map((file) => {
           const isActive = file.path === activeFilePath;
           const isEntry = file.path === project.entryScript;
@@ -123,13 +119,13 @@ export const ProjectExplorer: React.FC<ProjectExplorerProps> = ({
             <div
               key={file.path}
               onClick={() => onSelectFile(file.path)}
-              className={`group flex items-center justify-between px-3 py-1.5 text-xs cursor-pointer border-l-2 transition-all ${
+              className={`group flex items-center justify-between px-3 py-2 rounded-lg text-sm cursor-pointer transition-colors ${
                 isActive
-                  ? 'bg-sky-500/10 text-sky-300 border-sky-400 font-medium'
-                  : 'border-transparent text-slate-300 hover:bg-slate-800/50 hover:text-slate-100'
+                  ? 'bg-zinc-900 text-sky-400 font-medium'
+                  : 'text-zinc-300 hover:bg-zinc-900/60 hover:text-zinc-100'
               }`}
             >
-              <div className="flex items-center gap-2 truncate">
+              <div className="flex items-center gap-2.5 truncate">
                 {getFileIcon(file)}
                 <span className="truncate">{file.name}</span>
                 {file.isModified && (
@@ -137,9 +133,9 @@ export const ProjectExplorer: React.FC<ProjectExplorerProps> = ({
                 )}
               </div>
 
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex items-center gap-1.5">
                 {isEntry ? (
-                  <span className="text-[9px] px-1 py-0.2 rounded bg-sky-900/80 text-sky-300 border border-sky-700/60 font-mono">
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 border border-zinc-700 font-mono">
                     entry
                   </span>
                 ) : file.path.endsWith('.py') || file.path.endsWith('.pyw') ? (
@@ -149,9 +145,9 @@ export const ProjectExplorer: React.FC<ProjectExplorerProps> = ({
                       onSetEntryScript(file.path);
                     }}
                     title="Set as PyInstaller entry script"
-                    className="p-1 text-slate-500 hover:text-sky-300 rounded hover:bg-slate-700/50"
+                    className="p-1 text-zinc-500 hover:text-sky-300 rounded hover:bg-zinc-800 opacity-0 group-hover:opacity-100 transition-opacity"
                   >
-                    <FileCheck className="w-3 h-3" />
+                    <FileCheck className="w-3.5 h-3.5" />
                   </button>
                 ) : null}
 
@@ -165,9 +161,9 @@ export const ProjectExplorer: React.FC<ProjectExplorerProps> = ({
                       }
                     }}
                     title="Delete file"
-                    className="p-1 text-slate-500 hover:text-rose-400 rounded hover:bg-slate-700/50"
+                    className="p-1 text-zinc-500 hover:text-rose-400 rounded hover:bg-zinc-800 opacity-0 group-hover:opacity-100 transition-opacity"
                   >
-                    <Trash2 className="w-3 h-3" />
+                    <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 )}
               </div>
@@ -177,13 +173,13 @@ export const ProjectExplorer: React.FC<ProjectExplorerProps> = ({
       </div>
 
       {/* Directory Structure Helper Note */}
-      <div className="p-3 border-t border-slate-800 text-[11px] text-slate-400 bg-slate-950/30">
-        <div className="flex items-center gap-1.5 text-slate-300 font-medium mb-1">
-          <Sparkles className="w-3 h-3 text-sky-400" />
-          <span>Windows .pyw Format</span>
+      <div className="p-4 border-t border-zinc-800 text-xs text-zinc-400 bg-zinc-900/30">
+        <div className="flex items-center gap-1.5 text-zinc-300 font-medium mb-1.5">
+          <Info className="w-3.5 h-3.5 text-sky-400" />
+          <span>Windowed Python (.pyw)</span>
         </div>
-        <p className="text-[10px] text-slate-400 leading-relaxed">
-          Files with <code className="text-sky-300 font-mono">.pyw</code> launch via pythonw.exe without displaying an unwanted black console window.
+        <p className="text-xs text-zinc-400 leading-relaxed">
+          <code className="text-zinc-200 font-mono">.pyw</code> scripts run using pythonw.exe without displaying an empty console terminal window.
         </p>
       </div>
     </aside>
