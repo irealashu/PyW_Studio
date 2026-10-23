@@ -10,7 +10,9 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
+    "@types/jszip": "^3.4.1",
     "canvas-confetti": "^1.9.4",
+    "jszip": "^3.10.2",
     "lucide-react": "^1.16.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

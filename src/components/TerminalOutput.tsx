@@ -213,7 +213,7 @@ export const TerminalOutput: React.FC<TerminalOutputProps> = ({
         className="flex-1 overflow-y-auto p-4 space-y-1.5 text-zinc-300 font-mono text-[13px] leading-relaxed selection:bg-sky-500/30"
       >
         {!currentTask || currentTask.logs.length === 0 ? (
-          <div className="text-zinc-500 italic">
+          <div className="text-zinc-400 font-medium italic">
             PyW Studio Python 3.12.3 Console Ready. Type statements (&apos;2+2&apos;, &apos;math.sqrt(16)&apos;) or commands (&apos;pip list&apos;, &apos;help&apos;) below.
           </div>
         ) : (
@@ -221,11 +221,11 @@ export const TerminalOutput: React.FC<TerminalOutputProps> = ({
             const isStderr = log.stream === 'stderr';
             const isSystem = log.stream === 'system';
 
-            let colorClass = 'text-zinc-300';
+            let colorClass = 'text-zinc-200';
             if (isStderr) colorClass = 'text-rose-400 font-medium';
             else if (isSystem) colorClass = 'text-sky-400 font-semibold';
             else if (log.text.includes('INFO:')) colorClass = 'text-emerald-300';
-            else if (log.text.includes('WARNING:')) colorClass = 'text-amber-300';
+            else if (log.text.includes('WARNING:')) colorClass = 'text-amber-300 font-semibold';
             else if (log.text.includes('SUCCESS:')) colorClass = 'text-emerald-400 font-bold';
             else if (log.text.includes('ERROR:')) colorClass = 'text-rose-400 font-bold';
 
@@ -241,7 +241,7 @@ export const TerminalOutput: React.FC<TerminalOutputProps> = ({
       {/* Interactive Command Prompt Line */}
       <form
         onSubmit={handleInputSubmit}
-        className="h-10 bg-zinc-900 border-t border-zinc-800 px-4 flex items-center gap-3 select-text"
+        className="h-10 bg-zinc-900 border-t border-zinc-700 px-4 flex items-center gap-3 select-text"
       >
         <span className="text-emerald-400 font-bold font-mono text-sm select-none">
           &gt;&gt;&gt;
@@ -253,14 +253,14 @@ export const TerminalOutput: React.FC<TerminalOutputProps> = ({
           onChange={(e) => setInputVal(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Enter Python statement or CLI command (e.g. pip list, help)..."
-          className="flex-1 bg-transparent text-zinc-100 placeholder-zinc-500 outline-none font-mono text-sm"
+          className="flex-1 bg-transparent text-zinc-100 placeholder-zinc-400 outline-none font-mono text-sm"
         />
         <button
           type="submit"
           disabled={!inputVal.trim()}
-          className="p-1 text-zinc-400 hover:text-sky-300 disabled:opacity-30 cursor-pointer"
+          className="p-1 text-zinc-300 hover:text-white disabled:opacity-30 cursor-pointer"
         >
-          <CornerDownLeft className="w-4 h-4" />
+          <CornerDownLeft className="w-4 h-4 text-sky-400" />
         </button>
       </form>
     </div>

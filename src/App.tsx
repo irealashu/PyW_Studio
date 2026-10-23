@@ -11,6 +11,8 @@ import {
   PythonInterpreter 
 } from './types';
 import { storage } from './services/storage';
+import { resolveLatestVersion, formatPipOutdatedOutput, isVersionNewer } from './services/pypiService';
+import { downloadCompiledExe, exportAsPy, exportAsPyw, exportProjectAsZip } from './services/exportService';
 import { Header } from './components/Header';
 import { ProjectExplorer } from './components/ProjectExplorer';
 import { Editor } from './components/Editor';
@@ -47,6 +49,7 @@ export const App: React.FC = () => {
   const [isTerminalOpen, setIsTerminalOpen] = useState(true);
   const [currentTask, setCurrentTask] = useState<TaskLogItem | null>(null);
   const [isTaskRunning, setIsTaskRunning] = useState(false);
+  const [isCheckingUpdates, setIsCheckingUpdates] = useState(false);
   const [isRunningTests, setIsRunningTests] = useState(false);
 
   // Modals
@@ -184,18 +187,29 @@ export const App: React.FC = () => {
     appendLog(`[PyW Studio] Entry script updated to: ${path}`, 'system');
   };
 
+  const handleDownloadExe = () => {
+    downloadCompiledExe(currentProject);
+    appendLog(`[PyW Studio] Downloaded standalone Windows executable: ${currentProject.name}.exe`, 'system');
+  };
+
+  const handleExportPy = () => {
+    exportAsPy(activeFile, currentProject.name);
+    appendLog(`[PyW Studio] Exported Python script (.py): ${activeFile.name.replace(/\.(pyw|py|txt|json|md)$/i, '')}.py`, 'system');
+  };
+
+  const handleExportPyw = () => {
+    exportAsPyw(activeFile, currentProject.name);
+    appendLog(`[PyW Studio] Exported windowed Python script (.pyw): ${activeFile.name.replace(/\.(pyw|py|txt|json|md)$/i, '')}.pyw`, 'system');
+  };
+
+  const handleExportZip = async () => {
+    appendLog(`[PyW Studio] Compressing ${Object.keys(currentProject.files).length} project files into .zip archive...`, 'system');
+    await exportProjectAsZip(currentProject);
+    appendLog(`[PyW Studio] Successfully exported and downloaded project ZIP bundle.`, 'system');
+  };
+
   const handleExportProject = () => {
-    const content = Object.values(currentProject.files)
-      .map((f) => `### --- FILE: ${f.path} ---\n${f.content}\n\n`)
-      .join('\n');
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${currentProject.name}_export.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-    appendLog(`[PyW Studio] Exported project bundle for ${currentProject.name}`, 'system');
+    handleExportZip();
   };
 
   // Logging & Terminal Helper
@@ -218,35 +232,253 @@ export const App: React.FC = () => {
     });
   };
 
+  // Dependency Actions: Install, Uninstall, Check Updates, Upgrade
+  const handleInstallPackage = (pkgString: string) => {
+    setIsTerminalOpen(true);
+    setIsTaskRunning(true);
+
+    const [name, versionSpec] = pkgString.split(/[>=<]/);
+    const cleanName = name.trim();
+    const cleanVersion = versionSpec ? versionSpec.replace(/^[=<>]+/, '') : '1.0.0';
+
+    appendLog(`[pip] Running: pip install ${pkgString} in %LOCALAPPDATA%\\PyWStudio\\environments\\${currentProject.environmentId}`, 'system');
+    appendLog(`[pip] Collecting ${cleanName}...`, 'stdout');
+
+    setTimeout(() => {
+      appendLog(`[pip] Downloading ${cleanName}... (cached)`, 'stdout');
+      appendLog(`[pip] Installing collected packages: ${cleanName}`, 'stdout');
+      appendLog(`[pip] Successfully installed ${cleanName}-${cleanVersion}`, 'system');
+      setIsTaskRunning(false);
+
+      updateCurrentProject((prev) => {
+        const exists = prev.installedPackages.some((p) => p.name.toLowerCase() === cleanName.toLowerCase());
+        const updated = exists
+          ? prev.installedPackages.map((p) =>
+              p.name.toLowerCase() === cleanName.toLowerCase() ? { ...p, version: cleanVersion } : p
+            )
+          : [
+              ...prev.installedPackages,
+              {
+                name: cleanName,
+                version: cleanVersion,
+                latestVersion: cleanVersion,
+                size: '4.2 MB',
+                description: `Installed Python module ${cleanName}`,
+                installedAt: new Date().toISOString().slice(0, 10),
+                license: 'MIT',
+                vulnerabilityStatus: 'secure' as const,
+              },
+            ];
+
+        return {
+          ...prev,
+          installedPackages: updated,
+        };
+      });
+    }, 1000);
+  };
+
+  const handleUninstallPackage = (pkgName: string) => {
+    setIsTerminalOpen(true);
+    appendLog(`[pip] Running: pip uninstall -y ${pkgName}`, 'system');
+    appendLog(`[pip] Successfully uninstalled ${pkgName}`, 'stdout');
+
+    updateCurrentProject((prev) => ({
+      ...prev,
+      installedPackages: prev.installedPackages.filter((p) => p.name.toLowerCase() !== pkgName.toLowerCase()),
+    }));
+  };
+
+  // Check for updates for all installed packages (pip list --outdated)
+  const handleCheckUpdates = async () => {
+    if (isCheckingUpdates || isTaskRunning) return;
+    setIsTerminalOpen(true);
+    setIsCheckingUpdates(true);
+
+    appendLog(`[pip] Running: pip list --outdated in %LOCALAPPDATA%\\PyWStudio\\environments\\${currentProject.environmentId}`, 'system');
+    appendLog('[pip] Querying PyPI repository index for available package upgrades...', 'stdout');
+
+    try {
+      const outdatedList: { name: string; currentVersion: string; latestVersion: string }[] = [];
+      const updatedPackages: InstalledPackage[] = [];
+
+      for (const pkg of currentProject.installedPackages) {
+        const latest = await resolveLatestVersion(pkg.name, pkg.version);
+        const hasUpdate = isVersionNewer(pkg.version, latest);
+        if (hasUpdate) {
+          outdatedList.push({
+            name: pkg.name,
+            currentVersion: pkg.version,
+            latestVersion: latest,
+          });
+        }
+        updatedPackages.push({
+          ...pkg,
+          latestVersion: latest,
+        });
+      }
+
+      updateCurrentProject((prev) => ({
+        ...prev,
+        installedPackages: updatedPackages,
+      }));
+
+      const formattedLines = formatPipOutdatedOutput(outdatedList);
+      formattedLines.forEach((line) => {
+        appendLog(line, line.startsWith('[pip]') ? 'system' : 'stdout');
+      });
+    } catch (e: any) {
+      appendLog(`[pip] Error checking PyPI updates: ${e?.message || 'Network error'}`, 'stderr');
+    } finally {
+      setIsCheckingUpdates(false);
+    }
+  };
+
+  // Upgrade all packages with available updates (pip upgrade / pip update)
+  const handleUpgradeAllPackages = async () => {
+    if (isTaskRunning) return;
+    setIsTerminalOpen(true);
+    setIsTaskRunning(true);
+
+    appendLog(`[pip] Running: pip upgrade --all in %LOCALAPPDATA%\\PyWStudio\\environments\\${currentProject.environmentId}`, 'system');
+
+    const candidates = currentProject.installedPackages.filter((p) =>
+      p.latestVersion ? isVersionNewer(p.version, p.latestVersion) : false
+    );
+
+    if (candidates.length === 0) {
+      appendLog('[pip] Requirement already up-to-date: All installed packages are currently at their latest version.', 'system');
+      setIsTaskRunning(false);
+      return;
+    }
+
+    appendLog(`[pip] Found ${candidates.length} package(s) to upgrade: ${candidates.map((p) => p.name).join(', ')}`, 'stdout');
+
+    candidates.forEach((pkg, index) => {
+      setTimeout(() => {
+        const nextVer = pkg.latestVersion || pkg.version;
+        appendLog(`[pip] Collecting ${pkg.name}>=${nextVer}...`, 'stdout');
+        appendLog(`[pip] Downloading ${pkg.name}-${nextVer}-py3-none-any.whl (cached)`, 'stdout');
+        appendLog(`[pip] Found existing installation: ${pkg.name} ${pkg.version}`, 'stdout');
+        appendLog(`[pip] Uninstalling ${pkg.name}-${pkg.version}: Successfully uninstalled`, 'stdout');
+        appendLog(`[pip] Successfully installed ${pkg.name}-${nextVer}`, 'system');
+
+        if (index === candidates.length - 1) {
+          setIsTaskRunning(false);
+          updateCurrentProject((prev) => ({
+            ...prev,
+            installedPackages: prev.installedPackages.map((p) => {
+              const cand = candidates.find((c) => c.name.toLowerCase() === p.name.toLowerCase());
+              if (cand && cand.latestVersion) {
+                return {
+                  ...p,
+                  version: cand.latestVersion,
+                  latestVersion: cand.latestVersion,
+                };
+              }
+              return p;
+            }),
+          }));
+          appendLog(`[pip] Successfully upgraded all ${candidates.length} package(s) to latest release.`, 'system');
+        }
+      }, (index + 1) * 600);
+    });
+  };
+
+  // Upgrade single package (pip install --upgrade <pkg> / pip upgrade <pkg>)
+  const handleUpgradePackage = async (pkgName: string) => {
+    if (isTaskRunning) return;
+    const pkg = currentProject.installedPackages.find(
+      (p) => p.name.toLowerCase() === pkgName.toLowerCase()
+    );
+    if (!pkg) {
+      appendLog(`[pip] Package "${pkgName}" is not installed in current environment.`, 'stderr');
+      return;
+    }
+
+    setIsTerminalOpen(true);
+    setIsTaskRunning(true);
+
+    const targetVer = pkg.latestVersion || await resolveLatestVersion(pkg.name, pkg.version);
+
+    appendLog(`[pip] Running: pip install --upgrade ${pkg.name}`, 'system');
+    appendLog(`[pip] Collecting ${pkg.name}>=${targetVer}...`, 'stdout');
+
+    setTimeout(() => {
+      appendLog(`[pip] Downloading ${pkg.name}-${targetVer}-py3-none-any.whl (cached)`, 'stdout');
+      appendLog(`[pip] Found existing installation: ${pkg.name} ${pkg.version}`, 'stdout');
+      appendLog(`[pip] Uninstalling ${pkg.name}-${pkg.version}: Successfully uninstalled`, 'stdout');
+      appendLog(`[pip] Successfully installed ${pkg.name}-${targetVer}`, 'system');
+      setIsTaskRunning(false);
+
+      updateCurrentProject((prev) => ({
+        ...prev,
+        installedPackages: prev.installedPackages.map((p) =>
+          p.name.toLowerCase() === pkg.name.toLowerCase()
+            ? { ...p, version: targetVer, latestVersion: targetVer }
+            : p
+        ),
+      }));
+    }, 700);
+  };
+
   // Interactive Terminal REPL Command Execution
   const handleExecuteTerminalCommand = (cmd: string) => {
     appendLog(`>>> ${cmd}`, 'system');
     const cleanCmd = cmd.trim();
+    if (!cleanCmd) return;
 
-    if (cleanCmd.toLowerCase() === 'clear') {
+    // Support compound commands: e.g. "pip update && pip upgrade", "pip list --outdated && pip upgrade"
+    if (cleanCmd.includes('&&') || cleanCmd.includes(';')) {
+      const delimiter = cleanCmd.includes('&&') ? '&&' : ';';
+      const subCommands = cleanCmd.split(delimiter).map((c) => c.trim()).filter(Boolean);
+      subCommands.forEach((subCmd, idx) => {
+        setTimeout(() => {
+          executeSingleCommand(subCmd);
+        }, idx * 900);
+      });
+      return;
+    }
+
+    executeSingleCommand(cleanCmd);
+  };
+
+  const executeSingleCommand = (cleanCmd: string) => {
+    const lower = cleanCmd.toLowerCase();
+
+    if (lower === 'clear') {
       setCurrentTask(null);
       return;
     }
 
-    if (cleanCmd.toLowerCase() === 'help') {
-      appendLog('PyW Studio REPL Help:', 'stdout');
-      appendLog('  • Python expressions: 2+2, math.sqrt(16), sys.version', 'stdout');
-      appendLog('  • CLI commands: python -V, pip list, pip install <pkg>, pyinstaller -v', 'stdout');
-      appendLog('  • Utility: clear, help', 'stdout');
+    if (lower === 'help' || lower === 'pip help') {
+      appendLog('PyW Studio REPL & Pip Package Manager:', 'stdout');
+      appendLog('  • Package checks:   pip list --outdated, pip check, pip list, pip freeze', 'stdout');
+      appendLog('  • Package updates:  pip update, pip upgrade, pip update && pip upgrade', 'stdout');
+      appendLog('  • Install/Upgrade:  pip install <pkg>, pip install --upgrade <pkg>, pip install -U <pkg>', 'stdout');
+      appendLog('  • Package removal:  pip uninstall <pkg>', 'stdout');
+      appendLog('  • Python info:      python -V, pip -V, pyinstaller -v', 'stdout');
+      appendLog('  • Python eval:      2+2, math.sqrt(16), [x*2 for x in range(5)]', 'stdout');
+      appendLog('  • General:          clear, help', 'stdout');
       return;
     }
 
-    if (cleanCmd.toLowerCase() === 'python -v' || cleanCmd.toLowerCase() === 'python --version') {
+    if (lower === 'python -v' || lower === 'python --version') {
       appendLog('Python 3.12.3 (tags/v3.12.3:f6650f9, Apr 9 2024, 14:14:43) [MSC v.1938 64 bit (AMD64)] on win32', 'stdout');
       return;
     }
 
-    if (cleanCmd.toLowerCase() === 'pyinstaller -v' || cleanCmd.toLowerCase() === 'pyinstaller --version') {
+    if (lower === 'pip -v' || lower === 'pip --version') {
+      appendLog(`pip 24.0 from %LOCALAPPDATA%\\PyWStudio\\environments\\${currentProject.environmentId}\\lib\\site-packages\\pip (python 3.12)`, 'stdout');
+      return;
+    }
+
+    if (lower === 'pyinstaller -v' || lower === 'pyinstaller --version') {
       appendLog('PyInstaller 6.5.0 (standalone Windows PE32+ compiler)', 'stdout');
       return;
     }
 
-    if (cleanCmd.toLowerCase() === 'pip list') {
+    if (lower === 'pip list') {
       appendLog('Package         Version', 'stdout');
       appendLog('--------------- -------', 'stdout');
       currentProject.installedPackages.forEach((p) => {
@@ -255,8 +487,92 @@ export const App: React.FC = () => {
       return;
     }
 
-    if (cleanCmd.toLowerCase().startsWith('pip install ')) {
-      const pkg = cleanCmd.replace('pip install ', '').trim();
+    if (lower === 'pip freeze') {
+      currentProject.installedPackages.forEach((p) => {
+        appendLog(`${p.name}==${p.version}`, 'stdout');
+      });
+      return;
+    }
+
+    // pip list --outdated, pip list -o, pip check, pip outdated
+    if (
+      lower === 'pip list --outdated' || 
+      lower === 'pip list -o' || 
+      lower === 'pip check' || 
+      lower === 'pip outdated'
+    ) {
+      handleCheckUpdates();
+      return;
+    }
+
+    // pip update (alone or with flags/package)
+    if (lower === 'pip update' || lower === 'pip update --all' || lower === 'pip update -a') {
+      handleCheckUpdates().then(() => {
+        const hasOutdated = currentProject.installedPackages.some(
+          (p) => p.latestVersion && isVersionNewer(p.version, p.latestVersion)
+        );
+        if (hasOutdated) {
+          setTimeout(() => {
+            handleUpgradeAllPackages();
+          }, 800);
+        }
+      });
+      return;
+    }
+
+    if (lower.startsWith('pip update ')) {
+      const targetPkg = cleanCmd.slice('pip update '.length).trim().replace(/^-+/, '');
+      if (targetPkg === 'all' || targetPkg === 'a') {
+        handleUpgradeAllPackages();
+      } else {
+        handleUpgradePackage(targetPkg);
+      }
+      return;
+    }
+
+    // pip upgrade (alone or with flags/package)
+    if (lower === 'pip upgrade' || lower === 'pip upgrade --all' || lower === 'pip upgrade -a') {
+      handleUpgradeAllPackages();
+      return;
+    }
+
+    if (lower.startsWith('pip upgrade ')) {
+      const targetPkg = cleanCmd.slice('pip upgrade '.length).trim();
+      if (targetPkg === '--all' || targetPkg === '-a' || targetPkg === 'all') {
+        handleUpgradeAllPackages();
+      } else {
+        handleUpgradePackage(targetPkg);
+      }
+      return;
+    }
+
+    // pip install --upgrade <pkg> or pip install -U <pkg>
+    if (lower.startsWith('pip install --upgrade') || lower.startsWith('pip install -u')) {
+      const parts = cleanCmd.split(/\s+/);
+      const flagIdx = parts.findIndex((p) => p.toLowerCase() === '--upgrade' || p.toLowerCase() === '-u');
+      const targetPkg = parts.slice(flagIdx + 1).join(' ').trim();
+      if (!targetPkg || targetPkg === '--all' || targetPkg === 'all') {
+        handleUpgradeAllPackages();
+      } else {
+        handleUpgradePackage(targetPkg);
+      }
+      return;
+    }
+
+    // pip uninstall
+    if (lower.startsWith('pip uninstall')) {
+      const targetPkg = cleanCmd.replace(/pip uninstall(\s+-y)?/i, '').trim();
+      if (targetPkg) {
+        handleUninstallPackage(targetPkg);
+      } else {
+        appendLog('[pip] Error: Please specify a package to uninstall (e.g. pip uninstall requests)', 'stderr');
+      }
+      return;
+    }
+
+    // standard pip install
+    if (lower.startsWith('pip install ')) {
+      const pkg = cleanCmd.replace(/pip install\s+/i, '').trim();
       handleInstallPackage(pkg);
       return;
     }
@@ -270,7 +586,6 @@ export const App: React.FC = () => {
         pow: Math.pow,
         range: (n: number) => Array.from({ length: n }, (_, i) => i),
       };
-      // Simple math / JS evaluation
       const res = Function('math, pi, sqrt, pow, range', `'use strict'; return (${cleanCmd})`)(
         safeScope.math,
         safeScope.pi,
@@ -442,77 +757,6 @@ export const App: React.FC = () => {
     setCurrentTask((prev) => (prev ? { ...prev, status: 'cancelled' } : null));
   };
 
-  // Dependency Actions
-  const handleInstallPackage = (pkgString: string) => {
-    setIsTerminalOpen(true);
-    setIsTaskRunning(true);
-
-    const [name, versionSpec] = pkgString.split(/[>=<]/);
-    const cleanName = name.trim();
-    const cleanVersion = versionSpec ? versionSpec.replace(/^[=<>]+/, '') : '1.0.0';
-
-    appendLog(`[pip] Running: pip install ${pkgString} in %LOCALAPPDATA%\\PyWStudio\\environments\\${currentProject.environmentId}`, 'system');
-    appendLog(`[pip] Collecting ${cleanName}...`, 'stdout');
-
-    setTimeout(() => {
-      appendLog(`[pip] Downloading ${cleanName}... (cached)`, 'stdout');
-      appendLog(`[pip] Installing collected packages: ${cleanName}`, 'stdout');
-      appendLog(`[pip] Successfully installed ${cleanName}-${cleanVersion}`, 'system');
-      setIsTaskRunning(false);
-
-      updateCurrentProject((prev) => {
-        const exists = prev.installedPackages.some((p) => p.name.toLowerCase() === cleanName.toLowerCase());
-        const updated = exists
-          ? prev.installedPackages.map((p) =>
-              p.name.toLowerCase() === cleanName.toLowerCase() ? { ...p, version: cleanVersion } : p
-            )
-          : [
-              ...prev.installedPackages,
-              {
-                name: cleanName,
-                version: cleanVersion,
-                latestVersion: cleanVersion,
-                size: '4.2 MB',
-                description: `Installed Python module ${cleanName}`,
-                installedAt: new Date().toISOString().slice(0, 10),
-                license: 'MIT',
-                vulnerabilityStatus: 'secure' as const,
-              },
-            ];
-
-        return {
-          ...prev,
-          installedPackages: updated,
-        };
-      });
-    }, 1000);
-  };
-
-  const handleUninstallPackage = (pkgName: string) => {
-    setIsTerminalOpen(true);
-    appendLog(`[pip] Running: pip uninstall -y ${pkgName}`, 'system');
-    appendLog(`[pip] Successfully uninstalled ${pkgName}`, 'stdout');
-
-    updateCurrentProject((prev) => ({
-      ...prev,
-      installedPackages: prev.installedPackages.filter((p) => p.name !== pkgName),
-    }));
-  };
-
-  const handleUpgradePackage = (pkgName: string) => {
-    const pkg = currentProject.installedPackages.find((p) => p.name === pkgName);
-    if (!pkg || !pkg.latestVersion) return;
-    setIsTerminalOpen(true);
-    appendLog(`[pip] Running: pip install --upgrade ${pkgName}`, 'system');
-    appendLog(`[pip] Upgraded ${pkgName}: ${pkg.version} -> ${pkg.latestVersion}`, 'stdout');
-
-    updateCurrentProject((prev) => ({
-      ...prev,
-      installedPackages: prev.installedPackages.map((p) =>
-        p.name === pkgName ? { ...p, version: p.latestVersion! } : p
-      ),
-    }));
-  };
 
   const handleSyncWithRequirements = () => {
     const reqFile = currentProject.files['requirements.txt'];
@@ -724,6 +968,7 @@ export const App: React.FC = () => {
         currentProject={currentProject}
         projects={projects}
         activeView={activeView}
+        activeFilePath={activeFilePath}
         onSelectView={setActiveView}
         onSelectProject={(id) => setActiveProjectId(id)}
         onOpenNewProjectModal={() => setIsNewProjectModalOpen(true)}
@@ -733,6 +978,10 @@ export const App: React.FC = () => {
           setActiveView('builder');
           handleStartBuild();
         }}
+        onDownloadExe={handleDownloadExe}
+        onExportPy={handleExportPy}
+        onExportPyw={handleExportPyw}
+        onExportZip={handleExportZip}
         onCancelTask={handleCancelTask}
         isTaskRunning={isTaskRunning}
         hasUnsavedChanges={hasUnsavedChanges}
@@ -766,6 +1015,10 @@ export const App: React.FC = () => {
               onChangeContent={handleChangeContent}
               onSaveFile={handleSaveCurrentFile}
               onRunScript={handleRunScript}
+              onDownloadExe={handleDownloadExe}
+              onExportPy={handleExportPy}
+              onExportPyw={handleExportPyw}
+              onExportZip={handleExportZip}
             />
           )}
 
@@ -775,9 +1028,13 @@ export const App: React.FC = () => {
               onInstallPackage={handleInstallPackage}
               onUninstallPackage={handleUninstallPackage}
               onUpgradePackage={handleUpgradePackage}
+              onCheckUpdates={handleCheckUpdates}
+              onUpgradeAll={handleUpgradeAllPackages}
               onSyncWithRequirements={handleSyncWithRequirements}
               onExportToRequirements={handleExportToRequirements}
+              onRunTerminalCommand={handleExecuteTerminalCommand}
               isInstalling={isTaskRunning}
+              isCheckingUpdates={isCheckingUpdates}
             />
           )}
 

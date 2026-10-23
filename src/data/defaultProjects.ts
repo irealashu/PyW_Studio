@@ -206,9 +206,9 @@ export const INITIAL_PROJECTS: Project[] = [
     ],
     activeProfileId: 'prof-onefile',
     installedPackages: [
-      { name: 'pyinstaller', version: '6.5.0', latestVersion: '6.5.0', size: '18.4 MB', description: 'Freezes Python applications into standalone executables', installedAt: '2026-10-23', license: 'GPL-2.0', vulnerabilityStatus: 'secure' },
-      { name: 'requests', version: '2.31.0', latestVersion: '2.31.0', size: '3.2 MB', description: 'HTTP library for Python', installedAt: '2026-10-23', license: 'Apache-2.0', vulnerabilityStatus: 'secure' },
-      { name: 'packaging', version: '24.0', latestVersion: '24.0', size: '1.2 MB', description: 'Core utilities for Python packages', installedAt: '2026-10-23', license: 'Apache-2.0', vulnerabilityStatus: 'secure' },
+      { name: 'pyinstaller', version: '6.5.0', latestVersion: '6.11.1', size: '18.4 MB', description: 'Freezes Python applications into standalone executables', installedAt: '2026-10-23', license: 'GPL-2.0', vulnerabilityStatus: 'secure' },
+      { name: 'requests', version: '2.31.0', latestVersion: '2.32.3', size: '3.2 MB', description: 'HTTP library for Python', installedAt: '2026-10-23', license: 'Apache-2.0', vulnerabilityStatus: 'secure' },
+      { name: 'packaging', version: '24.0', latestVersion: '24.2', size: '1.2 MB', description: 'Core utilities for Python packages', installedAt: '2026-10-23', license: 'Apache-2.0', vulnerabilityStatus: 'secure' },
     ],
   },
 ];

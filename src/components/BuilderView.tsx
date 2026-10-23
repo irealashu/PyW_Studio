@@ -284,10 +284,10 @@ ${
                 <button
                   key={prof.id}
                   onClick={() => onSelectProfile(prof.id)}
-                  className={`px-3.5 py-1.5 text-sm rounded-lg font-medium transition-colors cursor-pointer ${
+                  className={`px-3.5 py-1.5 text-sm rounded-lg font-semibold transition-colors cursor-pointer ${
                     prof.id === activeProfile.id
-                      ? 'bg-zinc-800 text-white border border-zinc-700'
-                      : 'bg-zinc-950 text-zinc-400 hover:text-zinc-200 border border-zinc-800'
+                      ? 'bg-zinc-800 text-white border border-zinc-600 shadow-sm'
+                      : 'bg-zinc-950 text-zinc-200 hover:text-white border border-zinc-700'
                   }`}
                 >
                   {prof.name}
