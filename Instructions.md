@@ -11,7 +11,7 @@ Document version: 2.0
 
 ## 1. Product overview
 
-PyW Studio is a desktop application for creating, editing, testing, packaging, and managing Python projects. It is designed for Windows users who want a beginner-friendly workflow without sacrificing control. The app should support both `.pyw` and `.py` projects, enforce isolated dependency environments, and make packaging a project into a Windows executable a guided and verifiable process.
+PyW Studio is a desktop application for creating, editing, testing, packaging, and managing Python projects. It is designed for Windows users who want a beginner-friendly workflow without sacrificing [...]
 
 The application should help users:
 - create and open Python projects
@@ -58,16 +58,56 @@ The application must provide:
 Recommended project structure:
 
 MyProject/
-├── main.pyw
-├── requirements.txt
-├── pywstudio.json
-├── assets/
-├── modules/
-├── tests/
+├── app/
+│   ├── main.pyw
+│   ├── assets/
+│   ├── modules/
+│   ├── ui/
+│   └── tests/
+├── config/
+│   ├── pywstudio.json
+│   └── requirements.txt
+├── dist/
+├── docs/
+├── build/
+├── logs/
 ├── README.md
-└── dist/
+├── .gitignore
+└── .env.example
+
+This structure keeps application source and generated output clearly separated. The project root should remain user-owned and readable; the app should never treat generated or managed files as source files unless explicitly configured to do so.
 
 The environment, build cache, and temporary generated files should normally live outside the project source directory.
+
+Use a clear separation between source content and managed runtime data:
+
+MyProject/                     # user-owned project source tree
+├── app/
+│   ├── main.pyw
+│   ├── assets/
+│   ├── modules/
+│   ├── ui/
+│   └── tests/
+├── config/
+│   ├── pywstudio.json
+│   └── requirements.txt
+├── dist/
+├── docs/
+├── README.md
+└── .gitignore
+
+%LOCALAPPDATA%/PyWStudio/      # app-managed workspace, not inside the project folder
+├── environments/
+├── cache/
+├── staging/
+├── builds/
+├── logs/
+├── reports/
+├── config/
+├── temp/
+└── state/
+
+This separation keeps user project files safe and makes cleanup rules simpler and more reliable.
 
 ### 3.2 Source editor
 
@@ -375,6 +415,8 @@ The app should not require external packages to launch the main GUI.
 
 ### 5.2 Suggested project layout
 
+Use a consistent top-level structure so source code, tests, and managed runtime data are clearly separated.
+
 pyw_studio/
 ├── main.pyw
 ├── README.md
@@ -412,8 +454,57 @@ pyw_studio/
 ├── docs/
 │   ├── architecture.md
 │   └── user_guide.md
-└── samples/
-    └── example_project/
+├── samples/
+│   └── example_project/
+├── .gitignore
+├── .editorconfig
+└── scripts/
+    ├── bootstrap.py
+    └── dev_setup.py
+
+The repository itself should separate application code from user-facing samples, test fixtures, and documentation. This keeps future refactors and packaging tasks easier to manage.
+
+Recommended module grouping:
+
+pywstudio/
+├── app/
+│   ├── __init__.py
+│   └── main.pyw
+├── core/
+│   ├── __init__.py
+│   ├── config.py
+│   ├── models.py
+│   └── settings.py
+├── managers/
+│   ├── __init__.py
+│   ├── project_manager.py
+│   ├── dependency_manager.py
+│   ├── environment_manager.py
+│   ├── interpreter_manager.py
+│   ├── build_manager.py
+│   ├── cleanup_manager.py
+│   └── task_manager.py
+├── ui/
+│   ├── __init__.py
+│   ├── dashboard.py
+│   ├── projects_view.py
+│   ├── dependencies_view.py
+│   ├── environments_view.py
+│   ├── builder_view.py
+│   ├── history_view.py
+│   └── settings_view.py
+├── services/
+│   ├── __init__.py
+│   ├── editor_service.py
+│   ├── logging_service.py
+│   └── process_service.py
+├── storage/
+│   ├── __init__.py
+│   ├── project_store.py
+│   └── profile_store.py
+└── __init__.py
+
+If this layout is adopted, each module should be responsible for a single concern, and UI code should not perform filesystem logic directly.
 
 The initial implementation may be a single `.pyw` file, but production code should be modular and testable.
 
@@ -449,17 +540,28 @@ Use an app-specific managed directory, ideally within the platform's local appli
 Recommended separation:
 
 PyWStudio/
+├── config/
 ├── environments/
 ├── staging/
 ├── builds/
 ├── logs/
 ├── cache/
 ├── reports/
-└── config/
+├── temp/
+├── state/
+└── profiles/
+
+Project source directories should remain distinct from managed application directories. The app should never write project metadata, packages, or generated build artifacts into the source tree unless the user explicitly chooses a project-local output folder.
 
 The project source directory must remain distinct from managed application directories.
 
 Persistent app settings should live in a user config directory rather than only in the OS temp folder.
+
+This layout makes the distinction explicit:
+
+- Project directory: user-authored source files and project metadata
+- Managed app directory: generated environments, reports, logs, caches, builds, and temp data
+- Build output directory: user-visible artifact destination, usually inside the project or an explicit output folder
 
 ### 5.5 Process execution rules
 
@@ -651,7 +753,7 @@ MASTER PROMPT: BUILD PYW STUDIO
 
 You are a senior Python desktop application architect and Windows packaging specialist.
 
-Build a complete, reliable, production-oriented application named PyW Studio. The application manages Python `.pyw` and `.py` projects, isolated dependencies, virtual environments, and executable packaging workflows. The project must be implementation-ready and maintainable.
+Build a complete, reliable, production-oriented application named PyW Studio. The application manages Python `.pyw` and `.py` projects, isolated dependencies, virtual environments, and executable pack[...] 
 
 Required deliverables:
 - a launchable `main.pyw`
@@ -697,11 +799,11 @@ Architecture responsibilities:
 - automated tests
 
 Requirements by module:
-- Project manager: create, open, save, Save As, import, duplicate, rename, recent-project tracking, project folder navigation. Support `.pyw` and `.py` entry scripts and multiple files. Store project settings in a validated `pywstudio.json` file.
+- Project manager: create, open, save, Save As, import, duplicate, rename, recent-project tracking, project folder navigation. Support `.pyw` and `.py` entry scripts and multiple files. Store project metadata in a validated config file and enforce project-safe path handling.
 - Editor: functional Python editor with line numbers, syntax highlighting, search/replace, undo/redo, indentation controls, keyboard shortcuts, unsaved-change indicators, and line/column status.
 - Dependency manager: install, upgrade, uninstall, list versions, requirements import/export, validation, and accurate error reporting. Never run shell commands with user-supplied package strings.
-- Environment manager: support persistent project environments and temporary build environments. Use explicit interpreter paths and `venv` to create environments. Check ownership and validity before use.
-- PyInstaller builder: support one-file and one-folder builds, GUI and console modes, icons, output directories, additional data files, hidden imports, exclusions, runtime hooks, extra import paths, custom spec files, and build profiles. Validate config before starting builds and verify output artifact existence before reporting success.
+- Environment manager: support persistent project environments and temporary build environments. Use explicit interpreter paths and `venv` to create environments. Check ownership and validity before using or deleting an environment.
+- PyInstaller builder: support one-file and one-folder builds, GUI and console modes, icons, output directories, additional data files, hidden imports, exclusions, runtime hooks, extra import paths, custom metadata, and safe artifact verification.
 - Background execution: run long tasks outside the UI thread using thread-safe queues or similar mechanisms. Support cancellation, process termination, and safe shutdown.
 - Cleanup manager: verify managed roots, ownership, active tasks, and destructive intent before deleting anything. Never delete source files or project files automatically.
 
@@ -715,20 +817,20 @@ Testing requirements:
 - create automated tests for metadata validation, project management, path validation, environment lifecycle, requirement parsing, build configuration, artifact verification, and safe cleanup
 - use temporary directories and mocked subprocesses where practical
 - no internet access should be required for unit tests
-- integration tests may optional run with an installed Python interpreter and PyInstaller
+- integration tests may optionally run with an installed Python interpreter and PyInstaller
 
 Documentation requirements:
-- create a README with overview, supported platforms, prerequisites, launch instructions, environment behavior, dependency management, build workflow, supported PyInstaller options, cleanup behavior, troubleshooting, testing instructions, and known limitations
+- create a README with overview, supported platforms, prerequisites, launch instructions, environment behavior, dependency management, build workflow, supported PyInstaller options, cleanup behavior, and architecture summary
 - clearly document that executable packaging is platform-specific and that Windows executables should be built in a compatible Windows environment
 
 Development process:
-- implement in phases: architecture, GUI, project management, editor, interpreter/env management, dependency management, PyInstaller integration, profiles/history, cleanup/process supervision, testing, and documentation
+- implement in phases: architecture, GUI, project management, editor, interpreter/env management, dependency management, PyInstaller integration, profiles/history, cleanup/process supervision, testing, and release preparation
 - run the relevant tests at the end of each phase and fix issues before continuing
 - do not substitute abbreviated examples for working modules
 
 Definition of done:
 - the app launches successfully
-- users can create/open projects, edit and save files, select interpreters, create isolated envs, install dependencies, run scripts, build one-file and one-folder executables, view logs, and reopen projects with settings intact
+- users can create/open projects, edit and save files, select interpreters, create isolated envs, install dependencies, run scripts, build one-file and one-folder executables, view logs, and reopen projects with their settings intact
 - tests pass and the project is documented clearly
 
 ## 12. Release checklist
