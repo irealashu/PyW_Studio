@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, FolderPlus, Sparkles, CheckCircle2, FileCode2 } from 'lucide-react';
+import { X, FolderPlus, Sparkles, CheckCircle2, FileCode2, Gamepad2, Wrench, Calculator, FileText } from 'lucide-react';
 import { Project } from '../types';
 
 interface NewProjectModalProps {
@@ -7,7 +7,7 @@ interface NewProjectModalProps {
   onCreateProject: (
     name: string,
     description: string,
-    template: 'calculator' | 'cleaner' | 'blank'
+    template: 'calculator' | 'arcade' | 'cleaner' | 'blank'
   ) => void;
 }
 
@@ -17,7 +17,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
 }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [selectedTemplate, setSelectedTemplate] = useState<'calculator' | 'cleaner' | 'blank'>(
+  const [selectedTemplate, setSelectedTemplate] = useState<'calculator' | 'arcade' | 'cleaner' | 'blank'>(
     'calculator'
   );
 
@@ -37,7 +37,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1 text-slate-400 hover:text-slate-200 rounded hover:bg-slate-800"
+            className="p-1 text-slate-400 hover:text-slate-200 rounded hover:bg-slate-800 cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -51,7 +51,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
             <input
               type="text"
               autoFocus
-              placeholder="e.g. ImageOptimizer, AudioRecorder"
+              placeholder="e.g. ImageOptimizer, RetroArcade"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-sky-500"
@@ -75,7 +75,7 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
             <label className="text-xs font-semibold text-slate-300 block mb-2">
               Starter Template
             </label>
-            <div className="grid grid-cols-1 gap-2.5">
+            <div className="grid grid-cols-1 gap-2.5 max-h-60 overflow-y-auto pr-1">
               <div
                 onClick={() => setSelectedTemplate('calculator')}
                 className={`p-3 rounded-lg border cursor-pointer transition-all ${
@@ -85,15 +85,42 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-100">
-                    Modern Tkinter / ttk Desktop Utility
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <Calculator className="w-4 h-4 text-sky-400" />
+                    <span className="text-xs font-bold text-slate-100">
+                      Modern Tkinter / ttk Desktop Utility
+                    </span>
+                  </div>
                   {selectedTemplate === 'calculator' && (
                     <CheckCircle2 className="w-4 h-4 text-sky-400" />
                   )}
                 </div>
-                <p className="text-[11px] text-slate-400 mt-1">
-                  Full standalone GUI template with ttk widgets, event bindings, math engine, and PyInstaller configs.
+                <p className="text-[11px] text-slate-400 mt-1 pl-6">
+                  Full standalone GUI template with ttk widgets, event bindings, math engine, and unit tests.
+                </p>
+              </div>
+
+              <div
+                onClick={() => setSelectedTemplate('arcade')}
+                className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                  selectedTemplate === 'arcade'
+                    ? 'bg-sky-950/40 border-sky-500'
+                    : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Gamepad2 className="w-4 h-4 text-purple-400" />
+                    <span className="text-xs font-bold text-slate-100">
+                      Retro 2D Breakout Arcade Game
+                    </span>
+                  </div>
+                  {selectedTemplate === 'arcade' && (
+                    <CheckCircle2 className="w-4 h-4 text-sky-400" />
+                  )}
+                </div>
+                <p className="text-[11px] text-slate-400 mt-1 pl-6">
+                  Playable 2D Tkinter Canvas game with paddle movement, brick collision, game loop, and score tracking.
                 </p>
               </div>
 
@@ -106,14 +133,17 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-100">
-                    Multi-Threaded System Utility
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <Wrench className="w-4 h-4 text-emerald-400" />
+                    <span className="text-xs font-bold text-slate-100">
+                      Multi-Threaded System Utility
+                    </span>
+                  </div>
                   {selectedTemplate === 'cleaner' && (
                     <CheckCircle2 className="w-4 h-4 text-sky-400" />
                   )}
                 </div>
-                <p className="text-[11px] text-slate-400 mt-1">
+                <p className="text-[11px] text-slate-400 mt-1 pl-6">
                   Tkinter treeview, progressbar, threading, and system file manipulation.
                 </p>
               </div>
@@ -127,14 +157,17 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-100">
-                    Minimal Python Script (.pyw)
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-slate-400" />
+                    <span className="text-xs font-bold text-slate-100">
+                      Minimal Python Script (.pyw)
+                    </span>
+                  </div>
                   {selectedTemplate === 'blank' && (
                     <CheckCircle2 className="w-4 h-4 text-sky-400" />
                   )}
                 </div>
-                <p className="text-[11px] text-slate-400 mt-1">
+                <p className="text-[11px] text-slate-400 mt-1 pl-6">
                   Clean starter with entry script, pywstudio.json metadata, and requirements.txt.
                 </p>
               </div>
@@ -145,14 +178,14 @@ export const NewProjectModal: React.FC<NewProjectModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
+              className="px-4 py-2 rounded-lg text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!name.trim()}
-              className="px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white text-xs font-semibold shadow-sm transition-colors"
+              className="px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white text-xs font-semibold shadow-sm transition-colors cursor-pointer"
             >
               Create Project
             </button>

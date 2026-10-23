@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   X, 
   Minus, 
@@ -7,9 +7,11 @@ import {
   Sparkles, 
   RefreshCw, 
   HardDrive, 
-  CheckCircle2,
-  Terminal,
-  Activity
+  CheckCircle2, 
+  Terminal, 
+  Activity,
+  ArrowLeft,
+  ArrowRight
 } from 'lucide-react';
 import { Project } from '../types';
 
@@ -29,11 +31,138 @@ export const TkinterPreviewModal: React.FC<TkinterPreviewModalProps> = ({
   const [calcHistory, setCalcHistory] = useState('');
   const [expression, setExpression] = useState('');
 
-  // Cleaner utility state (if project is WorkspaceCleaner)
+  // Cleaner utility state
   const [isScanning, setIsScanning] = useState(false);
   const [cleanedSize, setCleanedSize] = useState<string | null>(null);
 
+  // Arcade game state
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [arcadeScore, setArcadeScore] = useState(0);
+  const [arcadeGameOver, setArcadeGameOver] = useState(false);
+
   const isCleaner = project.name.toLowerCase().includes('cleaner');
+  const isArcade = project.name.toLowerCase().includes('arcade');
+
+  // Arcade game loop
+  useEffect(() => {
+    if (!isArcade) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let paddleX = 180;
+    const paddleWidth = 80;
+    const paddleHeight = 10;
+    let ballX = 220;
+    let ballY = 160;
+    let ballDX = 2.5;
+    let ballDY = -2.5;
+    const ballRadius = 6;
+    let score = 0;
+    let animationId: number;
+
+    // Bricks
+    const brickRows = 4;
+    const brickCols = 7;
+    const brickWidth = 48;
+    const brickHeight = 14;
+    const brickPadding = 6;
+    const brickOffsetTop = 20;
+    const brickOffsetLeft = 14;
+
+    const bricks: { x: number; y: number; active: boolean; color: string }[] = [];
+    const colors = ['#ef4444', '#f97316', '#eab308', '#10b981'];
+
+    for (let r = 0; r < brickRows; r++) {
+      for (let c = 0; c < brickCols; c++) {
+        bricks.push({
+          x: c * (brickWidth + brickPadding) + brickOffsetLeft,
+          y: r * (brickHeight + brickPadding) + brickOffsetTop,
+          active: true,
+          color: colors[r % colors.length],
+        });
+      }
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') paddleX = Math.max(0, paddleX - 25);
+      if (e.key === 'ArrowRight') paddleX = Math.min(canvas.width - paddleWidth, paddleX + 25);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    const render = () => {
+      ctx.fillStyle = '#090d16';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw bricks
+      bricks.forEach((b) => {
+        if (!b.active) return;
+        ctx.fillStyle = b.color;
+        ctx.fillRect(b.x, b.y, brickWidth, brickHeight);
+      });
+
+      // Draw paddle
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(paddleX, canvas.height - 20, paddleWidth, paddleHeight);
+
+      // Draw ball
+      ctx.fillStyle = '#f43f5e';
+      ctx.beginPath();
+      ctx.arc(ballX, ballY, ballRadius, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Ball move
+      ballX += ballDX;
+      ballY += ballDY;
+
+      // Wall bounce
+      if (ballX + ballRadius > canvas.width || ballX - ballRadius < 0) ballDX = -ballDX;
+      if (ballY - ballRadius < 0) ballDY = -ballDY;
+
+      // Paddle bounce
+      if (
+        ballY + ballRadius >= canvas.height - 20 &&
+        ballX >= paddleX &&
+        ballX <= paddleX + paddleWidth
+      ) {
+        ballDY = -Math.abs(ballDY);
+      }
+
+      // Brick collision
+      bricks.forEach((b) => {
+        if (!b.active) return;
+        if (
+          ballX >= b.x &&
+          ballX <= b.x + brickWidth &&
+          ballY >= b.y &&
+          ballY <= b.y + brickHeight
+        ) {
+          b.active = false;
+          ballDY = -ballDY;
+          score += 10;
+          setArcadeScore(score);
+          onLogOutput(`[Tkinter Canvas] Brick hit! Score: ${score}`);
+        }
+      });
+
+      // Bottom death
+      if (ballY > canvas.height) {
+        setArcadeGameOver(true);
+        onLogOutput(`[Tkinter Canvas] Ball dropped. Game Over. Final Score: ${score}`);
+        return;
+      }
+
+      animationId = requestAnimationFrame(render);
+    };
+
+    render();
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      cancelAnimationFrame(animationId);
+    };
+  }, [isArcade]);
 
   // Calculator logic
   const handleCalcBtn = (val: string) => {
@@ -50,7 +179,6 @@ export const TkinterPreviewModal: React.FC<TkinterPreviewModalProps> = ({
       if (!expression) return;
       try {
         const sanitized = expression.replace(/×/g, '*').replace(/÷/g, '/');
-        // Simple safe evaluation
         const res = Function(`'use strict'; return (${sanitized})`)();
         const formatted = String(res);
         setCalcHistory(`${expression} =`);
@@ -92,6 +220,12 @@ export const TkinterPreviewModal: React.FC<TkinterPreviewModalProps> = ({
     }, 600);
   };
 
+  const titleText = isArcade
+    ? 'Retro 2D Arcade - Breakout (Tkinter Canvas)'
+    : isCleaner
+    ? 'PyW Studio - Workspace Cleaner (Tkinter)'
+    : 'Modern Calculator & Unit Converter (ttk)';
+
   return (
     <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
       {/* Windows Tkinter Simulated Frame */}
@@ -103,7 +237,7 @@ export const TkinterPreviewModal: React.FC<TkinterPreviewModalProps> = ({
               Tk
             </div>
             <span className="text-xs font-semibold text-slate-200">
-              {isCleaner ? 'PyW Studio - Workspace Cleaner (Tkinter)' : 'Modern Calculator & Unit Converter (ttk)'}
+              {titleText}
             </span>
             <span className="text-[9px] px-1 py-0.2 bg-emerald-950 text-emerald-400 border border-emerald-800 rounded font-mono">
               Running
@@ -121,7 +255,7 @@ export const TkinterPreviewModal: React.FC<TkinterPreviewModalProps> = ({
             <button
               onClick={onClose}
               title="Close Tkinter mainloop"
-              className="p-1 hover:text-white hover:bg-rose-600 rounded transition-colors"
+              className="p-1 hover:text-white hover:bg-rose-600 rounded transition-colors cursor-pointer"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -129,7 +263,29 @@ export const TkinterPreviewModal: React.FC<TkinterPreviewModalProps> = ({
         </div>
 
         {/* Tkinter Application Content */}
-        {isCleaner ? (
+        {isArcade ? (
+          <div className="p-4 bg-slate-950 text-slate-100 space-y-3">
+            <div className="flex items-center justify-between text-xs px-1">
+              <span className="font-bold text-slate-200">
+                Score: <strong className="text-sky-400 font-mono text-sm">{arcadeScore}</strong>
+              </span>
+              <span className="text-[11px] text-slate-400 font-mono">Use Arrow Keys or Buttons</span>
+            </div>
+
+            <canvas
+              ref={canvasRef}
+              width={400}
+              height={260}
+              className="w-full bg-slate-900 rounded-lg border border-slate-800 shadow-inner block mx-auto"
+            />
+
+            {arcadeGameOver && (
+              <div className="p-2 rounded bg-rose-950/40 border border-rose-500/30 text-rose-300 text-xs text-center font-medium">
+                Game Over! Final Score: {arcadeScore}
+              </div>
+            )}
+          </div>
+        ) : isCleaner ? (
           <div className="p-5 bg-slate-900 text-slate-100 space-y-4">
             <div className="text-center">
               <h3 className="text-base font-bold text-sky-400">Cache & Workspace Cleaner</h3>
@@ -162,13 +318,13 @@ export const TkinterPreviewModal: React.FC<TkinterPreviewModalProps> = ({
               <button
                 onClick={handleCleanerScan}
                 disabled={isScanning}
-                className="flex-1 py-2 rounded bg-sky-600 hover:bg-sky-500 text-white font-medium text-xs transition-colors"
+                className="flex-1 py-2 rounded bg-sky-600 hover:bg-sky-500 text-white font-medium text-xs transition-colors cursor-pointer"
               >
                 {isScanning ? 'Scanning...' : '🔍 Scan Caches'}
               </button>
               <button
                 onClick={handleCleanerClean}
-                className="flex-1 py-2 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs transition-colors"
+                className="flex-1 py-2 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs transition-colors cursor-pointer"
               >
                 🗑️ Clean Safe Items
               </button>
@@ -188,119 +344,119 @@ export const TkinterPreviewModal: React.FC<TkinterPreviewModalProps> = ({
             <div className="grid grid-cols-4 gap-1.5 text-sm font-semibold select-none">
               <button
                 onClick={() => handleCalcBtn('C')}
-                className="p-3 rounded bg-rose-600 hover:bg-rose-500 text-white shadow-sm"
+                className="p-3 rounded bg-rose-600 hover:bg-rose-500 text-white shadow-sm cursor-pointer"
               >
                 C
               </button>
               <button
                 onClick={() => handleCalcBtn('DEL')}
-                className="p-3 rounded bg-slate-700 hover:bg-slate-600 text-slate-100"
+                className="p-3 rounded bg-slate-700 hover:bg-slate-600 text-slate-100 cursor-pointer"
               >
                 DEL
               </button>
               <button
                 onClick={() => handleCalcBtn('%')}
-                className="p-3 rounded bg-slate-700 hover:bg-slate-600 text-slate-100"
+                className="p-3 rounded bg-slate-700 hover:bg-slate-600 text-slate-100 cursor-pointer"
               >
                 %
               </button>
               <button
                 onClick={() => handleCalcBtn('÷')}
-                className="p-3 rounded bg-sky-600 hover:bg-sky-500 text-white"
+                className="p-3 rounded bg-sky-600 hover:bg-sky-500 text-white cursor-pointer"
               >
                 ÷
               </button>
 
               <button
                 onClick={() => handleCalcBtn('7')}
-                className="p-3 rounded bg-slate-800 hover:bg-slate-700 text-slate-100"
+                className="p-3 rounded bg-slate-800 hover:bg-slate-700 text-slate-100 cursor-pointer"
               >
                 7
               </button>
               <button
                 onClick={() => handleCalcBtn('8')}
-                className="p-3 rounded bg-slate-800 hover:bg-slate-700 text-slate-100"
+                className="p-3 rounded bg-slate-800 hover:bg-slate-700 text-slate-100 cursor-pointer"
               >
                 8
               </button>
               <button
                 onClick={() => handleCalcBtn('9')}
-                className="p-3 rounded bg-slate-800 hover:bg-slate-700 text-slate-100"
+                className="p-3 rounded bg-slate-800 hover:bg-slate-700 text-slate-100 cursor-pointer"
               >
                 9
               </button>
               <button
                 onClick={() => handleCalcBtn('×')}
-                className="p-3 rounded bg-sky-600 hover:bg-sky-500 text-white"
+                className="p-3 rounded bg-sky-600 hover:bg-sky-500 text-white cursor-pointer"
               >
                 ×
               </button>
 
               <button
                 onClick={() => handleCalcBtn('4')}
-                className="p-3 rounded bg-slate-800 hover:bg-slate-700 text-slate-100"
+                className="p-3 rounded bg-slate-800 hover:bg-slate-700 text-slate-100 cursor-pointer"
               >
                 4
               </button>
               <button
                 onClick={() => handleCalcBtn('5')}
-                className="p-3 rounded bg-slate-800 hover:bg-slate-700 text-slate-100"
+                className="p-3 rounded bg-slate-800 hover:bg-slate-700 text-slate-100 cursor-pointer"
               >
                 5
               </button>
               <button
                 onClick={() => handleCalcBtn('6')}
-                className="p-3 rounded bg-slate-800 hover:bg-slate-700 text-slate-100"
+                className="p-3 rounded bg-slate-800 hover:bg-slate-700 text-slate-100 cursor-pointer"
               >
                 6
               </button>
               <button
                 onClick={() => handleCalcBtn('-')}
-                className="p-3 rounded bg-sky-600 hover:bg-sky-500 text-white"
+                className="p-3 rounded bg-sky-600 hover:bg-sky-500 text-white cursor-pointer"
               >
                 -
               </button>
 
               <button
                 onClick={() => handleCalcBtn('1')}
-                className="p-3 rounded bg-slate-800 hover:bg-slate-700 text-slate-100"
+                className="p-3 rounded bg-slate-800 hover:bg-slate-700 text-slate-100 cursor-pointer"
               >
                 1
               </button>
               <button
                 onClick={() => handleCalcBtn('2')}
-                className="p-3 rounded bg-slate-800 hover:bg-slate-700 text-slate-100"
+                className="p-3 rounded bg-slate-800 hover:bg-slate-700 text-slate-100 cursor-pointer"
               >
                 2
               </button>
               <button
                 onClick={() => handleCalcBtn('3')}
-                className="p-3 rounded bg-slate-800 hover:bg-slate-700 text-slate-100"
+                className="p-3 rounded bg-slate-800 hover:bg-slate-700 text-slate-100 cursor-pointer"
               >
                 3
               </button>
               <button
                 onClick={() => handleCalcBtn('+')}
-                className="p-3 rounded bg-sky-600 hover:bg-sky-500 text-white"
+                className="p-3 rounded bg-sky-600 hover:bg-sky-500 text-white cursor-pointer"
               >
                 +
               </button>
 
               <button
                 onClick={() => handleCalcBtn('0')}
-                className="col-span-2 p-3 rounded bg-slate-800 hover:bg-slate-700 text-slate-100"
+                className="col-span-2 p-3 rounded bg-slate-800 hover:bg-slate-700 text-slate-100 cursor-pointer"
               >
                 0
               </button>
               <button
                 onClick={() => handleCalcBtn('.')}
-                className="p-3 rounded bg-slate-800 hover:bg-slate-700 text-slate-100"
+                className="p-3 rounded bg-slate-800 hover:bg-slate-700 text-slate-100 cursor-pointer"
               >
                 .
               </button>
               <button
                 onClick={() => handleCalcBtn('=')}
-                className="p-3 rounded bg-emerald-600 hover:bg-emerald-500 text-white"
+                className="p-3 rounded bg-emerald-600 hover:bg-emerald-500 text-white cursor-pointer"
               >
                 =
               </button>

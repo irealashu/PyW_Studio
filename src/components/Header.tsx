@@ -17,7 +17,8 @@ import {
   FileCode2,
   Check,
   Sparkles,
-  Layers
+  Layers,
+  TestTube2
 } from 'lucide-react';
 import { Project, ViewMode } from '../types';
 
@@ -80,6 +81,7 @@ export const Header: React.FC<HeaderProps> = ({
     },
     { id: 'environment', label: 'Environments', icon: <Cpu className="w-4 h-4" /> },
     { id: 'builder', label: 'EXE Builder', icon: <Hammer className="w-4 h-4" /> },
+    { id: 'tests', label: 'Tests', icon: <TestTube2 className="w-4 h-4" /> },
     { id: 'history', label: 'Build History', icon: <History className="w-4 h-4" /> },
     { id: 'cleanup', label: 'Cleanup', icon: <Trash2 className="w-4 h-4" /> },
   ];

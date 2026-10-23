@@ -11,9 +11,14 @@ import {
   Save, 
   Play,
   ArrowRight,
-  Maximize2
+  Maximize2,
+  AlertTriangle,
+  AlertCircle,
+  CheckCircle2,
+  GitCompare,
+  Code
 } from 'lucide-react';
-import { ProjectFile } from '../types';
+import { ProjectFile, SyntaxDiagnostic } from '../types';
 
 interface EditorProps {
   file: ProjectFile;
@@ -43,6 +48,9 @@ export const Editor: React.FC<EditorProps> = ({
   const [replaceTerm, setReplaceTerm] = useState('');
   const [matchCount, setMatchCount] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [showDiff, setShowDiff] = useState(false);
+  const [diagnostics, setDiagnostics] = useState<SyntaxDiagnostic[]>([]);
+  const [showProblems, setShowProblems] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const lineNumbersRef = useRef<HTMLDivElement>(null);
@@ -64,6 +72,80 @@ export const Editor: React.FC<EditorProps> = ({
       col: lines[lines.length - 1].length + 1,
     });
   };
+
+  // Real-time Python Syntax Checker
+  useEffect(() => {
+    if (file.language !== 'python') {
+      setDiagnostics([]);
+      return;
+    }
+
+    const issues: SyntaxDiagnostic[] = [];
+    const lines = file.content.split('\n');
+
+    let openParens = 0;
+    let openBrackets = 0;
+    let openBraces = 0;
+
+    lines.forEach((lineText, idx) => {
+      const lineNum = idx + 1;
+      const trimmed = lineText.trim();
+
+      // Check comments vs code
+      if (trimmed.startsWith('#') || trimmed.length === 0) return;
+
+      // Check for missing colon on control flow statements
+      const controlFlowRegex = /^(def\s+\w+\(.*\)|class\s+\w+.*|if\s+.+|elif\s+.+|else|for\s+.+\s+in\s+.+|while\s+.+|try|except.*|finally)$/;
+      if (controlFlowRegex.test(trimmed) && !trimmed.endsWith(':')) {
+        issues.push({
+          line: lineNum,
+          column: lineText.length,
+          message: `SyntaxError: expected ':' at end of '${trimmed.split(' ')[0]}' statement`,
+          severity: 'error',
+        });
+      }
+
+      // Check for mixed tabs and spaces
+      if (lineText.startsWith(' ') && lineText.includes('\t')) {
+        issues.push({
+          line: lineNum,
+          column: 1,
+          message: 'TabError: inconsistent use of tabs and spaces in indentation',
+          severity: 'warning',
+        });
+      }
+
+      // Track brackets
+      for (const char of lineText) {
+        if (char === '(') openParens++;
+        else if (char === ')') openParens--;
+        else if (char === '[') openBrackets++;
+        else if (char === ']') openBrackets--;
+        else if (char === '{') openBraces++;
+        else if (char === '}') openBraces--;
+      }
+    });
+
+    if (openParens !== 0) {
+      issues.push({
+        line: lines.length,
+        column: 1,
+        message: `SyntaxError: unclosed parenthesis '(' (${Math.abs(openParens)} unmatched)`,
+        severity: 'error',
+      });
+    }
+
+    if (openBrackets !== 0) {
+      issues.push({
+        line: lines.length,
+        column: 1,
+        message: `SyntaxError: unclosed square bracket '[' (${Math.abs(openBrackets)} unmatched)`,
+        severity: 'error',
+      });
+    }
+
+    setDiagnostics(issues);
+  }, [file.content, file.language]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     // Save shortcut: Ctrl+S or Cmd+S
@@ -170,6 +252,19 @@ export const Editor: React.FC<EditorProps> = ({
   const lineCount = file.content.split('\n').length;
   const lineNumbers = Array.from({ length: lineCount }, (_, i) => i + 1);
 
+  // Jump cursor to diagnostic line
+  const jumpToLine = (lineNum: number) => {
+    if (!textareaRef.current) return;
+    const lines = file.content.split('\n');
+    let charIndex = 0;
+    for (let i = 0; i < lineNum - 1 && i < lines.length; i++) {
+      charIndex += lines[i].length + 1;
+    }
+    textareaRef.current.focus();
+    textareaRef.current.setSelectionRange(charIndex, charIndex);
+    updateCursorPosition();
+  };
+
   return (
     <div className="flex-1 flex flex-col h-full bg-slate-950 text-slate-100 overflow-hidden">
       {/* File Tab Bar */}
@@ -199,7 +294,7 @@ export const Editor: React.FC<EditorProps> = ({
                       e.stopPropagation();
                       onCloseTab(path);
                     }}
-                    className="p-0.5 text-slate-500 hover:text-slate-200 rounded hover:bg-slate-800 transition-colors ml-1"
+                    className="p-0.5 text-slate-500 hover:text-slate-200 rounded hover:bg-slate-800 transition-colors ml-1 cursor-pointer"
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -214,7 +309,7 @@ export const Editor: React.FC<EditorProps> = ({
           <button
             onClick={() => setShowSearch(!showSearch)}
             title="Search & Replace (Ctrl+F)"
-            className={`p-1.5 rounded-md hover:bg-slate-800 hover:text-slate-200 transition-colors ${
+            className={`p-1.5 rounded-md hover:bg-slate-800 hover:text-slate-200 transition-colors cursor-pointer ${
               showSearch ? 'bg-slate-800 text-sky-400' : ''
             }`}
           >
@@ -223,16 +318,25 @@ export const Editor: React.FC<EditorProps> = ({
           <button
             onClick={() => setWordWrap(!wordWrap)}
             title="Toggle Word Wrap"
-            className={`p-1.5 rounded-md hover:bg-slate-800 hover:text-slate-200 transition-colors ${
+            className={`p-1.5 rounded-md hover:bg-slate-800 hover:text-slate-200 transition-colors cursor-pointer ${
               wordWrap ? 'bg-slate-800 text-sky-400' : ''
             }`}
           >
             <WrapText className="w-3.5 h-3.5" />
           </button>
           <button
+            onClick={() => setShowDiff(!showDiff)}
+            title="Compare with saved version"
+            className={`p-1.5 rounded-md hover:bg-slate-800 hover:text-slate-200 transition-colors cursor-pointer ${
+              showDiff ? 'bg-slate-800 text-sky-400' : ''
+            }`}
+          >
+            <GitCompare className="w-3.5 h-3.5" />
+          </button>
+          <button
             onClick={handleCopyCode}
             title="Copy file contents"
-            className="p-1.5 rounded-md hover:bg-slate-800 hover:text-slate-200 transition-colors"
+            className="p-1.5 rounded-md hover:bg-slate-800 hover:text-slate-200 transition-colors cursor-pointer"
           >
             {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
           </button>
@@ -271,7 +375,7 @@ export const Editor: React.FC<EditorProps> = ({
             <button
               onClick={handleReplaceAll}
               disabled={!matchCount}
-              className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 disabled:opacity-40 font-medium transition-colors"
+              className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 disabled:opacity-40 font-medium transition-colors cursor-pointer"
             >
               Replace All
             </button>
@@ -279,28 +383,40 @@ export const Editor: React.FC<EditorProps> = ({
 
           <button
             onClick={() => setShowSearch(false)}
-            className="p-1 text-slate-400 hover:text-slate-200 rounded hover:bg-slate-800"
+            className="p-1 text-slate-400 hover:text-slate-200 rounded hover:bg-slate-800 cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
       )}
 
-      {/* Code Textarea Area with Line Numbers */}
+      {/* Code Textarea Area with Line Numbers & Error Gutter */}
       <div className="flex-1 flex overflow-hidden relative font-mono text-[13px] leading-relaxed">
-        {/* Line Numbers Gutter */}
+        {/* Line Numbers & Error Markers Gutter */}
         <div
           ref={lineNumbersRef}
-          className="w-14 bg-slate-950/80 border-r border-slate-800/80 text-slate-600 text-right pr-3 select-none py-3 overflow-hidden"
+          className="w-14 bg-slate-950/80 border-r border-slate-800/80 text-slate-600 text-right pr-2 select-none py-3 overflow-hidden shrink-0"
         >
-          {lineNumbers.map((num) => (
-            <div
-              key={num}
-              className={num === cursorPos.line ? 'text-sky-400 font-bold bg-slate-800/40 -mr-3 pr-3' : ''}
-            >
-              {num}
-            </div>
-          ))}
+          {lineNumbers.map((num) => {
+            const hasError = diagnostics.some((d) => d.line === num && d.severity === 'error');
+            const hasWarning = diagnostics.some((d) => d.line === num && d.severity === 'warning');
+
+            return (
+              <div
+                key={num}
+                className={`flex items-center justify-end gap-1 ${
+                  num === cursorPos.line ? 'text-sky-400 font-bold bg-slate-800/40' : ''
+                }`}
+              >
+                {hasError ? (
+                  <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" title="Syntax Error on this line" />
+                ) : hasWarning ? (
+                  <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" title="Syntax Warning on this line" />
+                ) : null}
+                <span>{num}</span>
+              </div>
+            );
+          })}
         </div>
 
         {/* Text Area */}
@@ -320,6 +436,38 @@ export const Editor: React.FC<EditorProps> = ({
         />
       </div>
 
+      {/* Problems / Syntax Errors Drawer */}
+      {showProblems && diagnostics.length > 0 && (
+        <div className="bg-slate-900 border-t border-slate-800 p-2.5 max-h-36 overflow-y-auto font-mono text-xs space-y-1">
+          <div className="flex items-center justify-between text-slate-400 pb-1 border-b border-slate-800">
+            <span className="font-semibold text-slate-300">
+              Syntax Diagnostics ({diagnostics.length})
+            </span>
+            <button
+              onClick={() => setShowProblems(false)}
+              className="text-slate-500 hover:text-slate-300"
+            >
+              ×
+            </button>
+          </div>
+          {diagnostics.map((diag, i) => (
+            <div
+              key={i}
+              onClick={() => jumpToLine(diag.line)}
+              className="flex items-center gap-2 px-2 py-1 rounded hover:bg-slate-800/60 cursor-pointer text-[11px]"
+            >
+              {diag.severity === 'error' ? (
+                <AlertCircle className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+              ) : (
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              )}
+              <span className="text-slate-400 font-bold">Line {diag.line}:</span>
+              <span className="text-slate-200">{diag.message}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Status Bar */}
       <div className="h-6 bg-slate-900 border-t border-slate-800/80 px-3 flex items-center justify-between text-[11px] text-slate-400 select-none">
         <div className="flex items-center gap-4">
@@ -330,6 +478,24 @@ export const Editor: React.FC<EditorProps> = ({
           <span>{lineCount} lines</span>
           <span>{file.content.length} characters</span>
           {file.isModified && <span className="text-amber-400 font-medium">• Unsaved changes</span>}
+
+          {/* Syntax diagnostics pill */}
+          {file.language === 'python' && (
+            <button
+              onClick={() => setShowProblems(!showProblems)}
+              className="flex items-center gap-1 hover:text-slate-200 cursor-pointer"
+            >
+              {diagnostics.length === 0 ? (
+                <span className="text-emerald-400 flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3" /> No syntax errors
+                </span>
+              ) : (
+                <span className="text-rose-400 flex items-center gap-1 font-semibold">
+                  <AlertCircle className="w-3 h-3" /> {diagnostics.length} issue(s)
+                </span>
+              )}
+            </button>
+          )}
         </div>
 
         <div className="flex items-center gap-4">

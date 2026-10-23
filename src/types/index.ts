@@ -3,6 +3,7 @@ export type ViewMode =
   | 'dependencies' 
   | 'environment' 
   | 'builder' 
+  | 'tests'
   | 'history' 
   | 'cleanup' 
   | 'settings';
@@ -14,6 +15,16 @@ export interface ProjectFile {
   language: 'python' | 'text' | 'json' | 'markdown';
   isEntryScript?: boolean;
   isModified?: boolean;
+  originalContent?: string;
+}
+
+export interface WindowsMetadata {
+  fileVersion: string;
+  productVersion: string;
+  companyName: string;
+  fileDescription: string;
+  copyright: string;
+  dpiAware: boolean;
 }
 
 export interface BuildProfile {
@@ -29,6 +40,9 @@ export interface BuildProfile {
   hiddenImports: string[];
   addData: string[];
   exclusions: string[];
+  metadata?: WindowsMetadata;
+  customSpecMode?: boolean;
+  customSpecContent?: string;
 }
 
 export interface InstalledPackage {
@@ -38,6 +52,8 @@ export interface InstalledPackage {
   size: string;
   description: string;
   installedAt: string;
+  license?: string;
+  vulnerabilityStatus?: 'secure' | 'warning';
 }
 
 export interface PythonInterpreter {
@@ -100,10 +116,26 @@ export interface Project {
 
 export interface TaskLogItem {
   id: string;
-  type: 'run' | 'build' | 'pip' | 'venv' | 'cleanup';
+  type: 'run' | 'build' | 'pip' | 'venv' | 'cleanup' | 'test';
   title: string;
   startTime: string;
   status: 'running' | 'success' | 'failed' | 'cancelled';
   duration?: string;
   logs: { text: string; stream: 'stdout' | 'stderr' | 'system' }[];
+}
+
+export interface TestCase {
+  id: string;
+  suite: string;
+  name: string;
+  status: 'passed' | 'failed' | 'running' | 'idle';
+  durationMs: number;
+  error?: string;
+}
+
+export interface SyntaxDiagnostic {
+  line: number;
+  column: number;
+  message: string;
+  severity: 'error' | 'warning';
 }

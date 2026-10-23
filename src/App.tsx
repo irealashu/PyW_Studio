@@ -17,12 +17,15 @@ import { Editor } from './components/Editor';
 import { DependencyManager } from './components/DependencyManager';
 import { EnvironmentManager } from './components/EnvironmentManager';
 import { BuilderView } from './components/BuilderView';
+import { TestRunnerView } from './components/TestRunnerView';
 import { BuildHistoryView } from './components/BuildHistoryView';
 import { CleanupManagerView } from './components/CleanupManagerView';
 import { TerminalOutput } from './components/TerminalOutput';
 import { TkinterPreviewModal } from './components/TkinterPreviewModal';
 import { NewProjectModal } from './components/NewProjectModal';
 import { SettingsModal } from './components/SettingsModal';
+import { IconConverterModal } from './components/IconConverterModal';
+import { GitHubWorkflowModal } from './components/GitHubWorkflowModal';
 
 export const App: React.FC = () => {
   // Persistent State
@@ -44,12 +47,14 @@ export const App: React.FC = () => {
   const [isTerminalOpen, setIsTerminalOpen] = useState(true);
   const [currentTask, setCurrentTask] = useState<TaskLogItem | null>(null);
   const [isTaskRunning, setIsTaskRunning] = useState(false);
-  const taskTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isRunningTests, setIsRunningTests] = useState(false);
 
   // Modals
   const [isTkinterPreviewOpen, setIsTkinterPreviewOpen] = useState(false);
   const [isNewProjectModalOpen, setIsNewProjectModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isIconConverterOpen, setIsIconConverterOpen] = useState(false);
+  const [isWorkflowModalOpen, setIsWorkflowModalOpen] = useState(false);
 
   // Save projects to localStorage whenever modified
   useEffect(() => {
@@ -74,12 +79,13 @@ export const App: React.FC = () => {
 
   // Sync activeFilePath when switching projects
   useEffect(() => {
-    setActiveFilePath(currentProject.entryScript);
-    setOpenFiles([currentProject.entryScript]);
+    const entry = currentProject.entryScript || Object.keys(currentProject.files)[0] || 'main.pyw';
+    setActiveFilePath(entry);
+    setOpenFiles([entry]);
   }, [currentProject.id, currentProject.entryScript]);
 
-  // Active file object
-  const activeFile = currentProject.files[activeFilePath] || currentProject.files[currentProject.entryScript];
+  // Active file object with fallback
+  const activeFile = currentProject.files[activeFilePath] || currentProject.files[currentProject.entryScript] || Object.values(currentProject.files)[0];
   const hasUnsavedChanges = Object.values(currentProject.files).some((f) => f.isModified);
 
   // Helper to update current project
@@ -179,7 +185,6 @@ export const App: React.FC = () => {
   };
 
   const handleExportProject = () => {
-    // Combine files into a downloadable summary or individual file
     const content = Object.values(currentProject.files)
       .map((f) => `### --- FILE: ${f.path} ---\n${f.content}\n\n`)
       .join('\n');
@@ -213,6 +218,72 @@ export const App: React.FC = () => {
     });
   };
 
+  // Interactive Terminal REPL Command Execution
+  const handleExecuteTerminalCommand = (cmd: string) => {
+    appendLog(`>>> ${cmd}`, 'system');
+    const cleanCmd = cmd.trim();
+
+    if (cleanCmd.toLowerCase() === 'clear') {
+      setCurrentTask(null);
+      return;
+    }
+
+    if (cleanCmd.toLowerCase() === 'help') {
+      appendLog('PyW Studio REPL Help:', 'stdout');
+      appendLog('  • Python expressions: 2+2, math.sqrt(16), sys.version', 'stdout');
+      appendLog('  • CLI commands: python -V, pip list, pip install <pkg>, pyinstaller -v', 'stdout');
+      appendLog('  • Utility: clear, help', 'stdout');
+      return;
+    }
+
+    if (cleanCmd.toLowerCase() === 'python -v' || cleanCmd.toLowerCase() === 'python --version') {
+      appendLog('Python 3.12.3 (tags/v3.12.3:f6650f9, Apr 9 2024, 14:14:43) [MSC v.1938 64 bit (AMD64)] on win32', 'stdout');
+      return;
+    }
+
+    if (cleanCmd.toLowerCase() === 'pyinstaller -v' || cleanCmd.toLowerCase() === 'pyinstaller --version') {
+      appendLog('PyInstaller 6.5.0 (standalone Windows PE32+ compiler)', 'stdout');
+      return;
+    }
+
+    if (cleanCmd.toLowerCase() === 'pip list') {
+      appendLog('Package         Version', 'stdout');
+      appendLog('--------------- -------', 'stdout');
+      currentProject.installedPackages.forEach((p) => {
+        appendLog(`${p.name.padEnd(16, ' ')} ${p.version}`, 'stdout');
+      });
+      return;
+    }
+
+    if (cleanCmd.toLowerCase().startsWith('pip install ')) {
+      const pkg = cleanCmd.replace('pip install ', '').trim();
+      handleInstallPackage(pkg);
+      return;
+    }
+
+    // Attempt client-side safe expression evaluation
+    try {
+      const safeScope = {
+        math: Math,
+        pi: Math.PI,
+        sqrt: Math.sqrt,
+        pow: Math.pow,
+        range: (n: number) => Array.from({ length: n }, (_, i) => i),
+      };
+      // Simple math / JS evaluation
+      const res = Function('math, pi, sqrt, pow, range', `'use strict'; return (${cleanCmd})`)(
+        safeScope.math,
+        safeScope.pi,
+        safeScope.sqrt,
+        safeScope.pow,
+        safeScope.range
+      );
+      appendLog(typeof res === 'object' ? JSON.stringify(res) : String(res), 'stdout');
+    } catch (e: any) {
+      appendLog(`SyntaxError/NameError: ${e?.message || 'Invalid Python statement'}`, 'stderr');
+    }
+  };
+
   // Run Script (F5) Execution Simulator
   const handleRunScript = () => {
     if (isTaskRunning) return;
@@ -235,7 +306,6 @@ export const App: React.FC = () => {
     };
     setCurrentTask(task);
 
-    // Simulate process startup and launch interactive Tkinter GUI Preview
     setTimeout(() => {
       appendLog('[Tkinter] Connecting to Windows DWM and initializing Tk root window...', 'stdout');
       appendLog('[Tkinter] Tkinter event loop mainloop() active. Application ready.', 'stdout');
@@ -279,7 +349,7 @@ export const App: React.FC = () => {
       { delay: 2000, text: `INFO: Analyzing hidden imports: [${(activeProfile.hiddenImports || []).join(', ')}]` },
       { delay: 2400, text: `INFO: Collecting bundled assets: ${(activeProfile.addData || []).join(', ') || 'None'}` },
       { delay: 2800, text: `INFO: Compiling Python bytecode (.pyc) to optimized archive...` },
-      { delay: 3200, text: `INFO: Embedding PE32+ application manifest and icon: ${activeProfile.icon || 'default.ico'}` },
+      { delay: 3200, text: `INFO: Embedding PE32+ application manifest and icon: ${activeProfile.icon || 'assets/app.ico'}` },
       { delay: 3600, text: activeProfile.upxCompression ? `INFO: UPX compression enabled. Compressing binary headers...` : `INFO: UPX compression skipped.` },
       { delay: 4000, text: `INFO: Assembling standalone executable: dist\\${activeProfile.outputName}` },
       { delay: 4300, text: `INFO: Verifying output artifact integrity on filesystem...` },
@@ -290,11 +360,9 @@ export const App: React.FC = () => {
       setTimeout(() => {
         appendLog(step.text, step.text.startsWith('SUCCESS:') ? 'system' : 'stdout');
 
-        // Final step completion
         if (index === buildSteps.length - 1) {
           setIsTaskRunning(false);
 
-          // Add to Build History
           const newRecord: BuildHistoryRecord = {
             id: `build-${Date.now()}`,
             timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19),
@@ -320,7 +388,6 @@ export const App: React.FC = () => {
 
           setBuildHistory((prev) => [newRecord, ...prev]);
 
-          // Trigger Confetti!
           try {
             confetti({
               particleCount: 75,
@@ -328,15 +395,49 @@ export const App: React.FC = () => {
               origin: { y: 0.6 },
             });
           } catch (e) {
-            // ignore if canvas-confetti unavailable
+            // ignore
           }
         }
       }, step.delay);
     });
   };
 
+  // Run Unit Tests Handler
+  const handleRunTests = () => {
+    if (isRunningTests) return;
+    setIsTerminalOpen(true);
+    setIsRunningTests(true);
+
+    appendLog('======================================================================', 'system');
+    appendLog('[pytest / unittest] Discovering test suites in tests/ ...', 'system');
+
+    setTimeout(() => {
+      appendLog('test_addition (tests.test_calculator.TestCalculatorEngine) ... ok', 'stdout');
+    }, 400);
+
+    setTimeout(() => {
+      appendLog('test_multiplication_precedence (tests.test_calculator.TestCalculatorEngine) ... ok', 'stdout');
+    }, 700);
+
+    setTimeout(() => {
+      appendLog('test_floating_point (tests.test_calculator.TestCalculatorEngine) ... ok', 'stdout');
+    }, 1000);
+
+    setTimeout(() => {
+      appendLog('test_division (tests.test_calculator.TestCalculatorEngine) ... ok', 'stdout');
+    }, 1300);
+
+    setTimeout(() => {
+      appendLog('test_syntax_safety (tests.test_calculator.TestCalculatorEngine) ... ok', 'stdout');
+      appendLog('----------------------------------------------------------------------', 'system');
+      appendLog('Ran 5 tests in 0.024s (OK)', 'system');
+      setIsRunningTests(false);
+    }, 1600);
+  };
+
   const handleCancelTask = () => {
     setIsTaskRunning(false);
+    setIsRunningTests(false);
     appendLog('[PyW Studio Task Supervisor] Process killed by user (SIGTERM sent to child PID).', 'stderr');
     setCurrentTask((prev) => (prev ? { ...prev, status: 'cancelled' } : null));
   };
@@ -374,6 +475,8 @@ export const App: React.FC = () => {
                 size: '4.2 MB',
                 description: `Installed Python module ${cleanName}`,
                 installedAt: new Date().toISOString().slice(0, 10),
+                license: 'MIT',
+                vulnerabilityStatus: 'secure' as const,
               },
             ];
 
@@ -505,54 +608,47 @@ export const App: React.FC = () => {
     }));
   };
 
+  const handleApplyIcon = (iconPath: string) => {
+    const activeProfile =
+      currentProject.buildProfiles.find((p) => p.id === currentProject.activeProfileId) ||
+      currentProject.buildProfiles[0];
+
+    handleUpdateActiveProfile({
+      ...activeProfile,
+      icon: iconPath,
+    });
+    appendLog(`[PyW Studio] Applied application icon: ${iconPath}`, 'system');
+  };
+
+  const handleAddWorkflowToProject = (yamlContent: string) => {
+    handleCreateFile('.github/workflows/build-exe.yml', yamlContent);
+    appendLog('[PyW Studio] Added automated GitHub Actions workflow: .github/workflows/build-exe.yml', 'system');
+  };
+
   // New Project Creation
   const handleCreateNewProject = (
     name: string,
     description: string,
-    template: 'calculator' | 'cleaner' | 'blank'
+    template: 'calculator' | 'arcade' | 'cleaner' | 'blank'
   ) => {
     const id = `proj-${Date.now()}`;
     const newProj: Project = {
       id,
       name,
       description: description || 'Python desktop project created with PyW Studio',
-      entryScript: 'main.pyw',
+      entryScript: template === 'arcade' ? 'arcade.pyw' : 'main.pyw',
       pythonExecutableId: 'py312-x64',
       environmentMode: 'persistent',
       environmentId: `env_${name.toLowerCase()}`,
       requirementsFile: 'requirements.txt',
       outputDirectory: 'dist',
       lastModified: new Date().toISOString().replace('T', ' ').slice(0, 16),
-      activeFile: 'main.pyw',
+      activeFile: template === 'arcade' ? 'arcade.pyw' : 'main.pyw',
       files: {
-        'main.pyw': {
-          name: 'main.pyw',
-          path: 'main.pyw',
-          content: `"""
-${name}
-Built with Python & Tkinter / ttk
-"""
-import sys
-import tkinter as tk
-from tkinter import ttk, messagebox
-
-def main():
-    root = tk.Tk()
-    root.title("${name} - PyW Studio")
-    root.geometry("450x300")
-    root.configure(bg="#0f172a")
-
-    lbl = tk.Label(root, text="${name}", font=("Segoe UI", 16, "bold"), bg="#0f172a", fg="#38bdf8")
-    lbl.pack(pady=40)
-
-    btn = tk.Button(root, text="Click Me", font=("Segoe UI", 11), bg="#0284c7", fg="#fff", padx=16, pady=6, command=lambda: messagebox.showinfo("PyW Studio", "Hello from ${name}!"))
-    btn.pack()
-
-    root.mainloop()
-
-if __name__ == "__main__":
-    main()
-`,
+        [template === 'arcade' ? 'arcade.pyw' : 'main.pyw']: {
+          name: template === 'arcade' ? 'arcade.pyw' : 'main.pyw',
+          path: template === 'arcade' ? 'arcade.pyw' : 'main.pyw',
+          content: `"""\n${name}\nBuilt with Python & Tkinter\n"""\nimport tkinter as tk\nfrom tkinter import messagebox\n\ndef main():\n    root = tk.Tk()\n    root.title("${name} - PyW Studio")\n    root.geometry("450x300")\n    root.configure(bg="#0f172a")\n    lbl = tk.Label(root, text="${name}", font=("Segoe UI", 16, "bold"), bg="#0f172a", fg="#38bdf8")\n    lbl.pack(pady=40)\n    btn = tk.Button(root, text="Launch Application", font=("Segoe UI", 11), bg="#0284c7", fg="#fff", padx=16, pady=6, command=lambda: messagebox.showinfo("PyW Studio", "Welcome to ${name}!"))\n    btn.pack()\n    root.mainloop()\n\nif __name__ == "__main__":\n    main()\n`,
           language: 'python',
           isEntryScript: true,
           isModified: false,
@@ -578,7 +674,7 @@ if __name__ == "__main__":
           name: 'Production GUI',
           mode: 'onefile',
           console: false,
-          icon: '',
+          icon: 'assets/app.ico',
           outputName: `${name}.exe`,
           outputDir: 'dist',
           cleanBuild: true,
@@ -586,12 +682,20 @@ if __name__ == "__main__":
           hiddenImports: ['tkinter', 'tkinter.ttk'],
           addData: [],
           exclusions: [],
+          metadata: {
+            fileVersion: '1.0.0.0',
+            productVersion: '1.0.0.0',
+            companyName: 'PyW Developer',
+            fileDescription: `${name} Standalone Application`,
+            copyright: 'Copyright (C) 2026',
+            dpiAware: true,
+          },
         },
       ],
       activeProfileId: `prof-${Date.now()}`,
       installedPackages: [
-        { name: 'pyinstaller', version: '6.5.0', size: '18.4 MB', description: 'Packaging engine', installedAt: '2026-10-23' },
-        { name: 'requests', version: '2.31.0', size: '3.2 MB', description: 'HTTP library', installedAt: '2026-10-23' },
+        { name: 'pyinstaller', version: '6.5.0', size: '18.4 MB', description: 'Packaging engine', installedAt: '2026-10-23', license: 'GPL-2.0', vulnerabilityStatus: 'secure' },
+        { name: 'requests', version: '2.31.0', size: '3.2 MB', description: 'HTTP library', installedAt: '2026-10-23', license: 'Apache-2.0', vulnerabilityStatus: 'secure' },
       ],
     };
 
@@ -602,7 +706,6 @@ if __name__ == "__main__":
   };
 
   const handleDownloadArtifact = (record: BuildHistoryRecord) => {
-    // Generate simulated executable bundle
     const dummyExe = `MZ\x90\x00\x03\x00\x00\x00\x04\x00\x00\x00\xff\xff\x00\x00\xb8\x00\x00\x00This program cannot be run in DOS mode. (PyInstaller bundle for ${record.projectName})`;
     const blob = new Blob([dummyExe], { type: 'application/octet-stream' });
     const url = URL.createObjectURL(blob);
@@ -640,7 +743,7 @@ if __name__ == "__main__":
 
       {/* 2. Main Workspace Body */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Project Explorer is visible when on Editor view or always docked */}
+        {/* Project Explorer */}
         <ProjectExplorer
           project={currentProject}
           activeFilePath={activeFilePath}
@@ -698,6 +801,16 @@ if __name__ == "__main__":
               onSelectProfile={handleSelectProfile}
               onStartBuild={handleStartBuild}
               isBuilding={isTaskRunning}
+              onOpenIconConverter={() => setIsIconConverterOpen(true)}
+              onOpenWorkflowModal={() => setIsWorkflowModalOpen(true)}
+            />
+          )}
+
+          {activeView === 'tests' && (
+            <TestRunnerView
+              project={currentProject}
+              onRunTests={handleRunTests}
+              isRunning={isRunningTests}
             />
           )}
 
@@ -713,13 +826,14 @@ if __name__ == "__main__":
         </main>
       </div>
 
-      {/* 3. Docked Terminal Output Runner */}
+      {/* 3. Docked Terminal Output Runner & REPL */}
       <TerminalOutput
         currentTask={currentTask}
         onCancelTask={handleCancelTask}
         onClearLogs={() => setCurrentTask(null)}
         isOpen={isTerminalOpen}
         onToggleOpen={() => setIsTerminalOpen(!isTerminalOpen)}
+        onExecuteCommand={handleExecuteTerminalCommand}
       />
 
       {/* 4. Modals */}
@@ -742,6 +856,21 @@ if __name__ == "__main__":
         <SettingsModal
           onClose={() => setIsSettingsModalOpen(false)}
           interpreters={interpreters}
+        />
+      )}
+
+      {isIconConverterOpen && (
+        <IconConverterModal
+          onClose={() => setIsIconConverterOpen(false)}
+          onApplyIcon={handleApplyIcon}
+        />
+      )}
+
+      {isWorkflowModalOpen && (
+        <GitHubWorkflowModal
+          project={currentProject}
+          onClose={() => setIsWorkflowModalOpen(false)}
+          onAddWorkflowToProject={handleAddWorkflowToProject}
         />
       )}
     </div>
