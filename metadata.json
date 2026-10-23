@@ -1,0 +1,8 @@
+{
+  "name": "PyW Studio",
+  "description": "Desktop workspace for creating, editing, testing, packaging, and managing Python projects and PyInstaller executables.",
+  "permissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
