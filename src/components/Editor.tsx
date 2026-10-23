@@ -339,60 +339,16 @@ export const Editor: React.FC<EditorProps> = ({
             <span>Save</span>
           </button>
 
-          {/* Quick Exports right to Save button */}
-          {onDownloadExe && (
-            <button
-              onClick={onDownloadExe}
-              title="Download standalone .exe"
-              className="hidden md:flex items-center gap-1 px-2 py-1 rounded-md bg-zinc-800 hover:bg-sky-950 text-sky-300 hover:text-sky-200 border border-sky-600/70 hover:border-sky-500 text-xs font-bold transition-all cursor-pointer"
-            >
-              <Download className="w-3 h-3 text-sky-400" />
-              <span>.exe</span>
-            </button>
-          )}
-
-          {onExportPy && (
-            <button
-              onClick={onExportPy}
-              title="Export as standard Python (.py)"
-              className="hidden md:flex items-center gap-1 px-2 py-1 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-100 hover:text-white border border-zinc-700 hover:border-zinc-500 text-xs font-bold transition-all cursor-pointer"
-            >
-              <FileCode className="w-3 h-3 text-blue-400" />
-              <span>.py</span>
-            </button>
-          )}
-
-          {onExportPyw && (
-            <button
-              onClick={onExportPyw}
-              title="Export as windowed Python (.pyw)"
-              className="hidden md:flex items-center gap-1 px-2 py-1 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-100 hover:text-white border border-zinc-700 hover:border-zinc-500 text-xs font-bold transition-all cursor-pointer"
-            >
-              <FileCode2 className="w-3 h-3 text-teal-400" />
-              <span>.pyw</span>
-            </button>
-          )}
-
-          {onExportZip && (
-            <button
-              onClick={onExportZip}
-              title="Export whole project as .zip"
-              className="hidden md:flex items-center gap-1 px-2 py-1 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-100 hover:text-white border border-zinc-700 hover:border-zinc-500 text-xs font-bold transition-all cursor-pointer"
-            >
-              <Archive className="w-3 h-3 text-amber-400" />
-              <span>.zip</span>
-            </button>
-          )}
-
-          {/* Export Dropdown for small screens or all-in-one menu */}
+          {/* Grouped Export Dropdown */}
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setExportDropdownOpen(!exportDropdownOpen)}
-              title="Export Options"
-              className="flex items-center gap-1 px-2 py-1 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white border border-zinc-700 text-xs font-semibold cursor-pointer"
+              title="Export File or Project (.exe, .py, .pyw, .zip)"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white border border-zinc-700 text-xs font-semibold cursor-pointer transition-colors"
             >
               <Download className="w-3.5 h-3.5 text-sky-400" />
-              <ChevronDown className={`w-3 h-3 text-zinc-300 transition-transform ${exportDropdownOpen ? 'rotate-180' : ''}`} />
+              <span>Export</span>
+              <ChevronDown className={`w-3 h-3 text-zinc-400 transition-transform ${exportDropdownOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {exportDropdownOpen && (
@@ -442,7 +398,7 @@ export const Editor: React.FC<EditorProps> = ({
                     className="w-full text-left px-2.5 py-1.5 rounded text-xs flex items-center gap-2 hover:bg-zinc-800 text-zinc-100 font-semibold cursor-pointer border-t border-zinc-800 mt-1 pt-1.5"
                   >
                     <Archive className="w-3.5 h-3.5 text-amber-400" />
-                    <span>Project export to .zip</span>
+                    <span>Export Project (.zip)</span>
                   </button>
                 )}
               </div>
